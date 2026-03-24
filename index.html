@@ -1,3 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOGIN - CAT KECERMATAN v16.5</title>
+    <style>
+        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; border-bottom: 5px solid var(--accent); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        button:hover { background: #2c3e50; }
+        .msg { color: #e74c3c; font-size: 0.8rem; margin-top: 10px; min-height: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2 style="margin: 0 0 20px 0; color: var(--primary);">MASUK PESERTA</h2>
+    <input type="email" id="email" placeholder="Email Peserta">
+    <input type="password" id="password" placeholder="Password">
+    <button id="btn-login">LOGIN</button>
+    <div id="message" class="msg"></div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -16,40 +42,43 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // ID Sesi unik untuk browser ini
-    const myId = 'dev_' + Math.random().toString(36).substr(2, 9);
+    // ID Sesi unik untuk browser ini agar tidak tertukar
+    const myId = 'sess_' + Math.random().toString(36).substr(2, 9);
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             const statusRef = ref(db, 'user_sessions/' + user.uid);
-
-            // TENDANG SESI LAMA: Update ID di database dengan ID baru kita
+            
+            // Daftarkan Sesi Terbaru (Menimpa sesi lama)
             set(statusRef, { sessionId: myId, email: user.email });
 
-            // PANTAU: Jika nanti ID di database berubah (ada login baru), kita yang mental
+            // Pantau Sesi: Jika di masa depan ID berubah (ada login lain), mental!
             onValue(statusRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.sessionId !== myId) {
-                    alert("Akun login di perangkat lain!");
+                    alert("Akun login di perangkat lain! Sesi ini ditutup.");
                     signOut(auth).then(() => { location.reload(); });
                 }
             });
 
-            // Langsung pindah ke soal tanpa jeda
-            setTimeout(() => { window.location.href = "soal.html"; }, 500);
+            // Redirect ke halaman soal
+            setTimeout(() => { window.location.href = "soal.html"; }, 800);
         }
     });
 
     document.getElementById('btn-login').onclick = async () => {
-        const email = document.getElementById('email').value;
-        const pass = document.getElementById('password').value;
-        const msg = document.getElementById('message');
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        const m = document.getElementById('message');
+        if(!e || !p) { m.innerText = "Isi Email & Password!"; return; }
         
-        msg.innerText = "Mengecek...";
+        m.innerText = "Mengecek Sesi...";
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) {
-            msg.innerText = "Gagal Masuk! Cek Email/Pass.";
+            await signInWithEmailAndPassword(auth, e, p);
+        } catch (err) {
+            m.innerText = "Gagal Masuk! Periksa Akun.";
         }
     };
 </script>
+</body>
+</html>
