@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v15.0 - Stacked Chart & Persistence</title>
+    <title>CAT KECERMATAN v16.0 - Super Lock & Glow Line Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; user-select: none; }
         .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); position: relative; }
         .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
         
@@ -40,16 +40,28 @@
         
         .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .jeda-box { background: white; padding: 40px; border-radius: 20px; text-align: center; border-bottom: 8px solid var(--accent); min-width: 300px; }
+
+        /* LOCK SCREEN OVERLAY */
+        #lock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
+<div id="lock-overlay">
+    <h1 style="font-size: 4rem; color:var(--danger);">⚠️ AKSES DITOLAK ⚠️</h1>
+    <p style="font-size: 1.5rem; max-width: 600px;">Akun Anda sedang digunakan untuk ujian di perangkat lain.<br>Sesi di perangkat ini telah diputus untuk menjaga integritas ujian.</p>
+    <button class="btn-ans" style="background:var(--accent); width:200px; margin-top:20px;" onclick="window.location.href='index.html'">KEMBALI KE LOGIN</button>
+</div>
+
 <div class="container">
-    <div class="header"><h3 id="user-display" style="margin:0">MENGHUBUNGKAN...</h3></div>
+    <div class="header">
+        <h3 id="user-display" style="margin:0">MENGHUBUNGKAN...</h3>
+        <span id="lock-status" style="position:absolute; right:15px; top:15px; font-size:0.7rem; color:var(--success); display:none;">🔒 TERKUNCI</span>
+    </div>
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Isi simbol untuk 10 kolom pengerjaan.</p>
+        <p style="font-size: 0.8rem; color: #666;">Simbol terakhir Anda dimuat otomatis.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
             <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ACAK SIMBOL</button>
@@ -85,7 +97,7 @@
         </div>
         
         <div id="rekap-tabel" style="overflow-x:auto;"></div>
-        <div style="height: 250px; margin: 20px 0;"><canvas id="stackedBarChart"></canvas></div>
+        <div style="height: 250px; margin: 20px 0;"><canvas id="glowLineChart"></canvas></div>
 
         <div class="history-section">
             <h3 style="text-align: center;">RIWAYAT SKOR ANDA</h3>
@@ -102,7 +114,7 @@
             </table>
         </div>
 
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.resetUjian()">UJIAN BARU</button>
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">UJIAN BARU</button>
     </div>
 </div>
 
@@ -115,15 +127,42 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = { apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", authDomain: "simulasi-2b93b.firebaseapp.com", databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", projectId: "simulasi-2b93b", storageBucket: "simulasi-2b93b.firebasestorage.app", appId: "1:562508858666:web:fa63f71ec175c675e64a53" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
+    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, mySessionId = null;
+
+    // FITUR 1: SUPER LOCK ENGINE (ANTI-JOKI DUAL LOGI)
+    onAuthStateChanged(auth, (user) => {
+        if (!user) { window.location.href = "index.html"; return; }
+        
+        document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
+        
+        // Buat ID unik sesi untuk tab ini (jika belum ada)
+        if(!sessionStorage.getItem('active_session_id')){
+            sessionStorage.setItem('active_session_id', 'sess_' + Date.now());
+        }
+        mySessionId = sessionStorage.getItem('active_session_id');
+
+        // Monitor status kunci di Firebase
+        const userStatusRef = ref(db, 'user_status/' + user.uid);
+        onValue(userStatusRef, (snapshot) => {
+            const data = snapshot.val();
+            // Jika status 'Ujian' dan ID Sesi berbeda, tendang!
+            if (data && data.status === 'Ujian' && data.sessionId !== mySessionId) {
+                document.getElementById('lock-overlay').style.display = 'flex';
+                // Paksa logout agar tidak bisa akses data
+                signOut(auth);
+            }
+        });
+        
+        loadSavedSymbols();
+    });
 
     // VALIDASI INPUT
     function validate(input, group) {
@@ -133,7 +172,6 @@
         group.classList.remove('error'); return true;
     }
 
-    // BUILD INPUTS
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
@@ -145,6 +183,14 @@
         inp.addEventListener('input', () => validate(inp, div));
     }
 
+    function loadSavedSymbols() {
+        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
+        for(let i=0; i<10; i++) {
+            const el = document.getElementById(`in-${i}`);
+            if(saved[i]) el.value = saved[i];
+        }
+    }
+
     window.autoFill = () => {
         const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+=?";
         for(let i=0; i<10; i++) {
@@ -154,65 +200,6 @@
         }
     };
 
-    // --- FITUR 2: PERSISTENCE ENGINE (LOAD PROGRESS) ---
-    onAuthStateChanged(auth, (user) => {
-        if (!user) { window.location.href = "index.html"; return; }
-        document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
-        checkProgress(); // Cek apakah ada ujian yang gantung
-    });
-
-    function checkProgress() {
-        const savedProgress = localStorage.getItem('cat_kecermatan_progress');
-        if (savedProgress) {
-            const data = JSON.parse(savedProgress);
-            // Validasi data progress
-            if (data.allKeys && data.stats && data.currentCol < 10 && data.status === 'running') {
-                if (confirm(`Sesi ujian sebelumnya terdeteksi di Kolom ${data.currentCol + 1}. Ingin melanjutkan?`)) {
-                    allKeys = data.allKeys;
-                    stats = data.stats;
-                    currentCol = data.currentCol;
-                    loadSymbolsToInput(allKeys);
-                    showS('screen-game');
-                    run();
-                    return;
-                }
-            }
-        }
-        // Jika tidak ada progress atau user menolak lanjut
-        resetStorage(false); // Clear progress but keep symbols
-        loadSavedSymbols(); // Load last used symbols to setup
-    }
-
-    function loadSymbolsToInput(keysArray) {
-        keysArray.forEach((symbols, i) => {
-            document.getElementById(`in-${i}`).value = symbols.join('');
-        });
-    }
-
-    function loadSavedSymbols() {
-        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
-        for(let i=0; i<10; i++) {
-            const el = document.getElementById(`in-${i}`);
-            if(saved[i]) el.value = saved[i];
-        }
-    }
-
-    // SIMPAN PROGRESS TIAP DETIK/JAWABAN
-    function saveProgress(status) {
-        const data = {
-            allKeys: allKeys,
-            stats: stats,
-            currentCol: currentCol,
-            status: status // 'running' atau 'finished'
-        };
-        localStorage.setItem('cat_kecermatan_progress', JSON.stringify(data));
-    }
-
-    function resetStorage(clearSymbols = false) {
-        localStorage.removeItem('cat_kecermatan_progress');
-        if(clearSymbols) localStorage.removeItem('last_symbols');
-    }
-
     window.mulai = () => {
         allKeys = []; let valid = true; let toSave = [];
         for(let i=0; i<10; i++) {
@@ -221,16 +208,26 @@
             allKeys.push(el.value.toUpperCase().split(''));
             toSave.push(el.value.toUpperCase());
         }
-        if(!valid) { alert("Perbaiki kolom yang merah!"); return; }
+        if(!valid) return;
         
-        localStorage.setItem('last_symbols', JSON.stringify(toSave)); // Save symbols
-        currentCol = 0; stats = []; 
-        saveProgress('running'); // Mulai simpan progress
-        showS('screen-game'); run();
+        localStorage.setItem('last_symbols', JSON.stringify(toSave));
+        
+        // --- AKTIFKAN KUNCI SUPER (LOCK) DI FIREBASE ---
+        const userStatusRef = ref(db, 'user_status/' + auth.currentUser.uid);
+        set(userStatusRef, {
+            status: 'Ujian',
+            sessionId: mySessionId,
+            waktuMulai: new Date().getTime()
+        });
+        // Pastikan kunci terhapus jika browser crash/tutup paksa
+        onDisconnect(userStatusRef).remove();
+
+        document.getElementById('lock-status').style.display = 'block';
+        currentCol = 0; stats = []; showS('screen-game'); run();
     };
 
     function run() {
-        b = 0; s = 0; isPaused = false;
+        b = 0; s = 0;
         document.getElementById('live-b').innerText = 0; document.getElementById('live-s').innerText = 0;
         document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
         let h = ""; allKeys[currentCol].forEach((k, i) => {
@@ -246,25 +243,17 @@
         document.getElementById('question').innerText = qArray.join('');
     }
 
-    window.jawab = (idx) => { 
-        if(isPaused) return;
-        if(idx === correctIdx) b++; else s++; 
-        document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; 
-        makeQ(); 
-    };
+    window.jawab = (idx) => { if(idx === correctIdx) b++; else s++; document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; makeQ(); };
 
     function startT() {
-        let t = 15; // DURASI 15 DETIK
+        let t = 15; // DURASI 15 DETIK (UJI COBA)
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
             t--; document.getElementById('timer').innerText = t;
             if(t <= 0) {
-                clearInterval(timerId); 
-                isPaused = true;
-                stats.push({ col: currentCol + 1, b: b, s: s });
+                clearInterval(timerId); stats.push({ col: currentCol + 1, b: b, s: s });
                 currentCol++;
-                saveProgress('running'); // Update progress sebelum jeda
                 if(currentCol < 10) tampilkanJeda(); else finish();
             }
         }, 1000);
@@ -292,11 +281,15 @@
 
     function finish() {
         showS('screen-result');
-        saveProgress('finished'); // Tandai ujian selesai
+        
+        // --- BUKA KUNCI (UNLOCK) SETELAH SELESAI ---
+        set(ref(db, 'user_status/' + auth.currentUser.uid), { status: 'Selesai' });
+        document.getElementById('lock-status').style.display = 'none';
+
         const bList = stats.map(d => d.b);
         const sList = stats.map(d => d.s); // Ambil data salah
         const totB = bList.reduce((a,x) => a+x, 0);
-        const totS = sList.reduce((a,x) => a+x, 0);
+        const totS = stats.reduce((a,x) => a+x.s, 0);
         const totT = totB + totS;
 
         let panker = totT / 10;
@@ -313,35 +306,63 @@
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
 
-        // --- FITUR 1: GRAFIK BAR TUMPUK (BENAR VS SALAH) ---
-        new Chart(document.getElementById('stackedBarChart'), {
-            type: 'bar',
-            data: {
-                labels: stats.map(d => "K"+d.col),
-                datasets: [
-                    {
-                        label: 'Benar',
-                        data: bList,
-                        backgroundColor: '#27ae60', // Hijau
-                        borderRadius: 5
-                    },
-                    {
-                        label: 'Salah',
-                        data: sList,
-                        backgroundColor: '#e74c3c', // Merah
-                        borderRadius: 5
-                    }
-                ]
+        // --- FITUR 3: GRAFIK "TALI" (GLOW LINE) DENGAN INFO BENAR/SALAH ---
+        const ctx = document.getElementById('glowLineChart').getContext('react');
+        new Chart(ctx, {
+            type: 'line', 
+            data: { 
+                labels: stats.map(d => "K"+d.col), 
+                datasets: [{ 
+                    label:'Benar', 
+                    data: bList, 
+                    borderColor:'#27ae60', 
+                    tension:0.4, // Membuat tali melengkung mulus
+                    fill:true, 
+                    backgroundColor:'rgba(39,174,96,0.1)', // Hijau Glow Transparan
+                    borderWidth: 4, // Tali lebih tebal
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#27ae60',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    // Shadow effect (Glow)
+                    shadowColor: 'rgba(39,174,96,0.5)',
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowOffsetY: 4
+                }] 
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { stacked: true, grid: { display: false } },
-                    y: { stacked: true, beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: false } // Hilangkan grid visual kotak
+                    },
+                    x: {
+                        grid: { display: false } // Hilangkan grid visual kotak
+                    }
                 },
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { display: false }, // Hilangkan kotak legend
+                    // TOOLTIP KUSTOM UNTUK MENAMPILKAN SALAH & BENAR
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            // Menambahkan info Salah di tooltip
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const benar = stats[index].b;
+                                const salah = stats[index].s;
+                                return [`✅ Benar: ${benar}`, `❌ Salah: ${salah}`];
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -356,12 +377,7 @@
         loadMyHistory();
     }
 
-    // Tombol Ujian Baru
-    window.resetUjian = () => {
-        resetStorage(false); // Clear progress gantung
-        location.reload(); 
-    };
-
+    window.ulang = () => { location.reload(); };
     function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
 
