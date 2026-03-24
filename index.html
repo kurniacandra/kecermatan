@@ -1,4 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CAT Kecermatan</title>
+    <style>
+        :root { 
+            --primary: #1a252f; 
+            --accent: #f39c12; 
+            --success: #27ae60; 
+            --danger: #e74c3c; 
+            --bg: #f4f7f6; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+
+        .login-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center; 
+            border-top: 6px solid var(--accent); 
+        }
+
+        h2 { color: var(--primary); margin-bottom: 5px; letter-spacing: 1px; }
+        p { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 30px; }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary); font-size: 0.85rem; }
+        
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(243, 156, 18, 0.2); }
+
+        .btn-login { 
+            width: 100%; 
+            padding: 15px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1rem;
+            transition: 0.3s; 
+            margin-top: 10px;
+        }
+
+        .btn-login:hover { background: #2c3e50; transform: translateY(-2px); }
+        .btn-login:disabled { background: #bdc3c7; cursor: not-allowed; transform: none; }
+
+        .divider { height: 1px; background: #eee; margin: 30px 0; position: relative; }
+        .divider span { 
+            position: absolute; 
+            top: -10px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: white; 
+            padding: 0 15px; 
+            color: #95a5a6; 
+            font-size: 0.8rem; 
+            text-transform: uppercase;
+        }
+
+        .btn-wa { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            text-decoration: none; 
+            width: 100%; 
+            padding: 14px; 
+            background: #25D366; 
+            color: white; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            box-sizing: border-box; 
+            transition: 0.3s;
+        }
+
+        .btn-wa:hover { background: #128C7E; }
+        
+        #error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 15px; display: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>CAT KECERMATAN</h2>
+    <p>Simulasi Kedinasan & AKPOL 2026</p>
+    
+    <div class="input-group">
+        <label>Email Peserta</label>
+        <input type="email" id="email" placeholder="contoh@email.com">
+    </div>
+    
+    <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Masukkan password">
+    </div>
+    
+    <button onclick="window.login()" id="btn-submit" class="btn-login">MASUK SISTEM</button>
+    <div id="error-msg">Terjadi kesalahan saat masuk.</div>
+
+    <div class="divider"><span>Belum punya akses?</span></div>
+
+    <a href="https://wa.me/62895401605009?text=Halo%20Admin,%20saya%20ingin%20daftar%20akun%20CAT%20Kecermatan." 
+       target="_blank" class="btn-wa">
+       DAFTAR VIA WHATSAPP
+    </a>
+</div>
+
 <script type="module">
+    // Konfigurasi Firebase (Gunakan SDK Versi 10 agar stabil)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -19,46 +152,8 @@
     window.login = async () => {
         const email = document.getElementById('email').value.trim();
         const pass = document.getElementById('password').value.trim();
-        const btn = document.getElementById('btn-text');
+        const btn = document.getElementById('btn-submit');
+        const err = document.getElementById('error-msg');
 
-        if(!email || !pass) { 
-            alert("Harap isi Email dan Password!"); 
-            return; 
-        }
-
-        btn.innerText = "MEMVALIDASI...";
-        btn.disabled = true;
-
-        try {
-            // 1. Proses Login ke Firebase Auth
-            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            const user = userCredential.user;
-
-            // 2. Update Session ID di Realtime Database
-            const newSessId = 'sess_' + Math.random().toString(36).substr(2, 9);
-            const sRef = ref(db, 'user_sessions/' + user.uid);
-
-            await set(sRef, { 
-                sessionId: newSessId,
-                lastLogin: Date.now() 
-            });
-
-            // 3. Pindah Halaman
-            window.location.href = "soal.html";
-
-        } catch (error) {
-            console.error(error);
-            btn.innerText = "MASUK";
-            btn.disabled = false;
-
-            // Handle Error Spesifik
-            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                alert("Email atau Password salah!");
-            } else if (error.code === 'auth/network-request-failed') {
-                alert("Koneksi internet bermasalah!");
-            } else {
-                alert("Terjadi kesalahan: " + error.message);
-            }
-        }
-    };
-</script>
+        if(!email || !pass) {
+            alert("Harap lengkapi email dan
