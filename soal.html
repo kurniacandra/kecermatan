@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
     <script>
-        // Proteksi: Cek apakah user sudah login melalui index.html
         if (sessionStorage.getItem("statusLogin") !== "aktif") {
             alert("Akses ditolak! Silakan login terlebih dahulu.");
             window.location.href = "index.html";
@@ -20,33 +19,44 @@
         .header h1 { margin: 0; font-size: 1.4rem; }
         .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
         .active { display: block; }
+        
+        /* Setup Style */
         .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
         .input-group label { width: 70px; font-weight: bold; font-size: 0.85rem; color: #555; }
         input[type="text"] { flex: 1; padding: 8px; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
+
+        /* Game Layout */
         .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
         .timer-box { font-size: 2.2rem; font-weight: 800; color: var(--danger); }
-        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
-        .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
-        .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
-        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; user-select: none; }
-        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        /* KEY ROW & MINI BUTTONS */
+        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .key-box { border: 2px solid #333; border-radius: 8px; overflow: hidden; position: relative; background: #fff; height: 130px; }
+        .key-head { background: #333; color: white; padding: 5px; font-weight: bold; font-size: 1.1rem; }
+        .key-val { font-size: 2.2rem; padding: 10px 0; font-weight: 900; color: #000; }
+        
+        /* Navigasi Jawaban Kecil di Kiri Bawah */
+        .ans-grid { position: absolute; bottom: 5px; left: 5px; display: flex; gap: 3px; }
+        .btn-ans-mini { width: 22px; height: 22px; font-size: 0.7rem; border: 1px solid #ccc; background: #eee; cursor: pointer; font-weight: bold; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+        .btn-ans-mini:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Soal Utama */
+        #question { font-size: 5rem; font-weight: 900; letter-spacing: 20px; margin: 40px 0; color: #000; user-select: none; }
+
+        /* Result Style */
         .total-score-badge { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: inline-block; min-width: 200px; }
         .total-score-badge div { font-size: 3.5rem; font-weight: 900; color: var(--accent); }
         .aspek-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
         .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); }
         .aspek-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
         .aspek-card div { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background: #f2f2f2; }
-        
-        /* Gaya Khusus Credit */
+
+        .btn-main { padding: 15px 30px; font-size: 1rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
-        .ig-link { color: var(--primary); font-weight: bold; text-decoration: none; }
-        .ig-link:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -57,7 +67,7 @@
     <div id="screen-setup" class="screen active">
         <h3>Input Karakter 10 Kolom</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 250px; font-size: 1.1rem;" onclick="validateAndStart()">START SIMULASI</button>
+        <button class="btn-main" style="background: var(--success);" onclick="validateAndStart()">START SIMULASI</button>
     </div>
 
     <div id="screen-game" class="screen">
@@ -66,21 +76,40 @@
             <div class="timer-box" id="timer">60</div>
             <div>B: <span id="live-b" style="color:var(--success); font-weight:bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight:bold;">0</span></div>
         </div>
+
         <div class="key-row">
-            <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
-            <div class="key-box"><div class="key-head">B</div><div class="key-val" id="v1"></div></div>
-            <div class="key-box"><div class="key-head">C</div><div class="key-val" id="v2"></div></div>
-            <div class="key-box"><div class="key-head">D</div><div class="key-val" id="v3"></div></div>
-            <div class="key-box"><div class="key-head">E</div><div class="key-val" id="v4"></div></div>
+            <div class="key-box">
+                <div class="key-head">A</div>
+                <div class="key-val" id="v0">-</div>
+                <div class="ans-grid">
+                    <div class="btn-ans-mini" onclick="hit(0)">A</div>
+                    <div class="btn-ans-mini" onclick="hit(1)">B</div>
+                    <div class="btn-ans-mini" onclick="hit(2)">C</div>
+                    <div class="btn-ans-mini" onclick="hit(3)">D</div>
+                    <div class="btn-ans-mini" onclick="hit(4)">E</div>
+                </div>
+            </div>
+            <div class="key-box">
+                <div class="key-head">B</div>
+                <div class="key-val" id="v1">-</div>
+            </div>
+            <div class="key-box">
+                <div class="key-head">C</div>
+                <div class="key-val" id="v2">-</div>
+            </div>
+            <div class="key-box">
+                <div class="key-head">D</div>
+                <div class="key-val" id="v3">-</div>
+            </div>
+            <div class="key-box">
+                <div class="key-head">E</div>
+                <div class="key-val" id="v4">-</div>
+            </div>
         </div>
+
         <div id="question">----</div>
-        <div class="ans-grid">
-            <button class="btn-ans" onclick="hit(0)">A</button>
-            <button class="btn-ans" onclick="hit(1)">B</button>
-            <button class="btn-ans" onclick="hit(2)">C</button>
-            <button class="btn-ans" onclick="hit(3)">D</button>
-            <button class="btn-ans" onclick="hit(4)">E</button>
-        </div>
+        
+        <p style="color: #888; font-size: 0.9rem;">Klik huruf kecil di kotak A atau gunakan Keyboard (A, B, C, D, E)</p>
     </div>
 
     <div id="screen-result" class="screen">
@@ -95,12 +124,12 @@
         </div>
         <div id="final-table"></div>
         <div style="height: 300px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="resetTest()">ULANGI TES</button>
+        <button class="btn-main" style="background:var(--success); margin-top:20px;" onclick="resetTest()">ULANGI TES</button>
     </div>
 
     <div class="credit-footer">
         Aplikasi Simulasi &copy; 2026 | 
-        <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" class="ig-link">Credit by KurniaCandra</a>
+        <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" style="color: var(--primary); font-weight: bold; text-decoration: none;">Credit by KurniaCandra</a>
     </div>
 </div>
 
@@ -161,12 +190,8 @@
                 clearInterval(timerId);
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
-                if(currentColumn < TOTAL_COL) { 
-                    alert(`Kolom ${currentColumn} Selesai!`); 
-                    runColumn(); 
-                } else { 
-                    finish(); 
-                }
+                if(currentColumn < TOTAL_COL) { runColumn(); } 
+                else { finish(); }
             }
         }, 1000);
     }
@@ -191,9 +216,7 @@
         document.getElementById('res-ketahanan').innerText = ketahananVal.toFixed(1) + "%";
 
         let html = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th><th>Total</th></tr>`;
-        statsData.forEach(d => { 
-            html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; 
-        });
+        statsData.forEach(d => { html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; });
         html += `</table>`;
         document.getElementById('final-table').innerHTML = html;
 
