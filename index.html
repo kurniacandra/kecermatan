@@ -5,35 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CAT Kecermatan</title>
     <style>
-        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; }
+        :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid var(--accent); }
         h2 { color: var(--primary); margin-bottom: 10px; }
         p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
         input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
-        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        input:focus { border-color: var(--accent); }
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 15px; }
         .btn-login:hover { background: #2c3e50; }
         .divider { height: 1px; background: #eee; margin: 20px 0; position: relative; }
         .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #999; font-size: 0.8rem; }
-        .btn-wa { display: block; text-decoration: none; width: 100%; padding: 12px; background: #25D366; color: white; border-radius: 8px; font-weight: bold; box-sizing: border-box; }
+        .btn-wa { display: block; text-decoration: none; width: 100%; padding: 12px; background: #25D366; color: white; border-radius: 8px; font-weight: bold; box-sizing: border-box; transition: 0.3s; }
+        .btn-wa:hover { background: #128C7E; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div class="login-card">
     <h2>CAT KECERMATAN</h2>
-    <p>Simulasi Persiapan Kedinasan & AKPOL</p>
+    <p>Simulasi Persiapan Masuk Kedinasan & AKPOL</p>
+    
     <input type="email" id="email" placeholder="Email Peserta">
     <input type="password" id="password" placeholder="Password">
-    <button onclick="window.login()" id="btn-submit" class="btn-login">MASUK SISTEM</button>
+    
+    <button onclick="window.login()" class="btn-login">MASUK SISTEM</button>
+
     <div class="divider"><span>BELUM PUNYA AKUN?</span></div>
-    <a href="https://wa.me/62895401605009?text=Halo%20Admin,%20saya%20mau%20daftar%20akun%20CAT." target="_blank" class="btn-wa">DAFTAR VIA WHATSAPP</a>
+
+    <a href="https://wa.me/62895401605009?text=Halo%20Admin,%20saya%20mau%20daftar%20akun%20CAT%20Kecermatan.%20Mohon%20info%20selengkapnya." 
+       target="_blank" 
+       class="btn-wa">
+       DAFTAR VIA WHATSAPP
+    </a>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
@@ -46,39 +55,32 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
 
     window.login = () => {
-        const email = document.getElementById('email').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        const btn = document.getElementById('btn-submit');
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
 
-        if(!email || !pass) { alert("Isi email & password!"); return; }
+        if(!email || !pass) {
+            alert("Harap isi Email dan Password!");
+            return;
+        }
 
-        btn.innerText = "MEMVALIDASI...";
-        btn.disabled = true;
-
-        // Login murni (Pasti berhasil kalau Auth benar)
+        // Login murni tanpa auto-create
         signInWithEmailAndPassword(auth, email, pass)
-            .then((result) => {
-                // Buat ID sesi baru
-                const sessId = 's_' + Math.random().toString(36).substr(2, 5);
-                
-                // Simpan ke database tanpa ditunggu (agar tidak stuck)
-                set(ref(db, 'user_sessions/' + result.user.uid), { sessionId: sessId });
-                
-                // Simpan di memori HP/Laptop
-                localStorage.setItem('my_session', sessId);
-
-                // Langsung pindah halaman
+            .then(() => {
                 window.location.href = "soal.html";
             })
             .catch((error) => {
-                btn.innerText = "MASUK SISTEM";
-                btn.disabled = false;
-                alert("Login Gagal! Akun tidak ditemukan.");
+                if (error.code === 'auth/user-not-found') {
+                    alert("Akun tidak terdaftar. Silakan hubungi Admin via WhatsApp untuk pendaftaran.");
+                } else if (error.code === 'auth/wrong-password') {
+                    alert("Password salah!");
+                } else {
+                    alert("Gagal Login: Periksa kembali email/koneksi Anda.");
+                }
             });
     };
 </script>
+
 </body>
 </html>
