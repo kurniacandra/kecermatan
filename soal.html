@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT v8.0 - Professional Edition</title>
+    <title>CAT KECERMATAN v9.0 - Final Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -13,7 +13,7 @@
         .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
         
-        /* VALIDASI INPUT STYLE */
+        /* VALIDASI INPUT */
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
         .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; transition: 0.3s; }
         .input-group.error { border: 2px solid var(--danger); background: #fff0f0; }
@@ -21,6 +21,7 @@
         .error-msg { color: var(--danger); font-size: 0.65rem; display: none; font-weight: bold; margin-top: 5px; }
         .input-group.error .error-msg { display: block; }
 
+        /* GAMEPLAY */
         .stats-bar { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
         .timer { font-size: 3rem; font-weight: 800; color: var(--danger); }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
@@ -31,7 +32,7 @@
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         
-        /* JEDA POPUP */
+        /* POPUP JEDA */
         .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .jeda-box { background: white; padding: 40px; border-radius: 20px; text-align: center; border-bottom: 8px solid var(--accent); min-width: 320px; }
         .jeda-timer { font-size: 6rem; font-weight: 900; color: var(--danger); margin: 10px 0; }
@@ -48,10 +49,10 @@
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Tiap kolom wajib 5 karakter unik (tidak boleh ada huruf sama).</p>
+        <p style="font-size: 0.8rem; color: #666;">Setiap kolom wajib berisi 5 karakter unik.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
-            <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold;">ISI OTOMATIS</button>
+            <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc;">ISI OTOMATIS</button>
             <button onclick="window.mulai()" style="flex:2; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1.1rem;">MULAI UJIAN</button>
         </div>
     </div>
@@ -77,14 +78,14 @@
     </div>
 
     <div id="screen-result" class="screen">
-        <h3 style="margin:0">REKAPITULASI HASIL</h3>
+        <h3 style="margin:0">HASIL PENILAIAN</h3>
         <div class="final-score-box">
             <h1 style="font-size: 4.5rem; margin:0;" id="res-total">0</h1>
             <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
         </div>
         <div id="rekap-tabel" style="overflow-x:auto;"></div>
         <div style="height: 180px;"><canvas id="mainChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">ULANGI SIMULASI</button>
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">ULANGI</button>
     </div>
 </div>
 
@@ -93,7 +94,6 @@
         <h2 style="margin:0; color:#333;">KOLOM SELESAI</h2>
         <p style="color:#666;">Persiapan kolom berikutnya dalam:</p>
         <div id="jeda-countdown" class="jeda-timer">5</div>
-        <p style="font-weight:bold; color:var(--primary);">SIAPKAN JARI ANDA!</p>
     </div>
 </div>
 
@@ -109,7 +109,7 @@
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // --- VALIDASI REAL-TIME ---
+    // VALIDASI INPUT
     function validate(input, group) {
         const val = input.value.toUpperCase();
         const isDuplicate = new Set(val).size !== val.length;
@@ -120,20 +120,20 @@
         }
     }
 
-    // --- BUILD INPUTS ---
+    // BUILD INPUTS
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
-        div.className = 'input-group';
-        div.id = `g-${i}`;
+        div.className = 'input-group'; div.id = `g-${i}`;
         div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> <div class="error-msg">Duplicate/Short</div>`;
         inputArea.appendChild(div);
         const inp = div.querySelector('input');
         inp.addEventListener('input', () => validate(inp, div));
     }
 
+    // AUTOFILL FIX (STOK KARAKTER LEBIH BANYAK)
     window.autoFill = () => {
-        const p = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+?".split("").sort(()=>Math.random()-0.5);
+        const p = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%&*!+?=[]{}".split("").sort(()=>Math.random()-0.5);
         for(let i=0; i<10; i++) {
             const chunk = p.splice(0, 5).join("");
             const el = document.getElementById(`in-${i}`);
@@ -172,7 +172,7 @@
             if(!validate(el, document.getElementById(`g-${i}`))) valid = false;
             allKeys.push(el.value.toUpperCase().split(''));
         }
-        if(!valid) { alert("Perbaiki kolom yang merah (5 karakter unik)!"); return; }
+        if(!valid) { alert("Tiap kolom harus 5 karakter UNIK!"); return; }
         localStorage.setItem("cat_keys", JSON.stringify(allKeys));
         currentCol = 0; stats = []; showS('screen-game'); run();
     };
@@ -244,8 +244,7 @@
         document.getElementById('rekap-tabel').innerHTML = h;
 
         new Chart(document.getElementById('mainChart'), {
-            type: 'line',
-            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension:0.3 }] }
+            type: 'line', data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension:0.3 }] }
         });
         push(ref(db, 'rekap_skor'), { nama: auth.currentUser.email, skor: final.toFixed(1), waktu: new Date().toLocaleString() });
     }
