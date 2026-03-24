@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v16.0 - Line Chart & Interactive Tooltip</title>
+    <title>CAT KECERMATAN v16.1 - Silent Mode</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -22,8 +22,9 @@
         .input-group.error .error-msg { display: block; }
 
         /* GAMEPLAY */
-        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
-        .timer { font-size: 3rem; font-weight: 800; color: var(--danger); }
+        /* Modifikasi stats-bar agar timer tetap center meskipun B/S dihapus */
+        .stats-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
+        .timer { font-size: 3rem; font-weight: 800; color: var(--danger); grid-column: 2; }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
         .key-box { border: 2px solid #2c3e50; border-radius: 8px; background: #fff; overflow: hidden; }
         .key-h { background: #2c3e50; color: white; padding: 3px; font-size: 0.8rem; }
@@ -62,11 +63,7 @@
         <div class="stats-bar">
             <div id="col-title" style="font-weight: 900; font-size: 1.2rem;">KOLOM 1</div>
             <div class="timer" id="timer">15</div>
-            <div style="text-align: right;">
-                <b style="color:var(--success)">B: <span id="live-b">0</span></b><br>
-                <b style="color:var(--danger)">S: <span id="live-s">0</span></b>
             </div>
-        </div>
         <div class="key-row" id="key-container"></div>
         <div id="question">----</div>
         <div class="ans-grid">
@@ -122,14 +119,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-    // Fungsi untuk menerjemahkan angka menjadi Grade Psikologi
-function getStatusPsikologi(nilai) {
-    if (nilai >= 80) return { label: "SANGAT BAIK (ST)", color: "#1b5e20" };
-    if (nilai >= 65) return { label: "BAIK (T)", color: "#2e7d32" };
-    if (nilai >= 50) return { label: "CUKUP (C)", color: "#f9a825" };
-    if (nilai >= 40) return { label: "KURANG (K)", color: "#d32f2f" };
-    return { label: "SANGAT KURANG (SK)", color: "#b71c1c" };
-}
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
 
@@ -217,7 +206,7 @@ function getStatusPsikologi(nilai) {
 
     function run() {
         b = 0; s = 0; isPaused = false;
-        document.getElementById('live-b').innerText = 0; document.getElementById('live-s').innerText = 0;
+        // Logic InnerText dihapus agar tidak error
         document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
         let h = ""; allKeys[currentCol].forEach((k, i) => {
             h += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v">${k}</div></div>`;
@@ -235,12 +224,12 @@ function getStatusPsikologi(nilai) {
     window.jawab = (idx) => { 
         if(isPaused) return;
         if(idx === correctIdx) b++; else s++; 
-        document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; 
+        // Update live stats dihapus untuk mode silent
         makeQ(); 
     };
 
     function startT() {
-        let t = 60;
+        let t = 15;
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
@@ -284,26 +273,21 @@ function getStatusPsikologi(nilai) {
         const totS = sList.reduce((a,x) => a+x, 0);
         const totT = totB + totS;
 
-        // --- RUMUS PERHITUNGAN ---
         let panker = totT / 10;
         let tianker = totT > 0 ? (totB / totT) * 100 : 0;
         let janker = 100 - ((Math.max(...bList) - Math.min(...bList)) * 5);
         let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
         let final = (Math.min(panker*2, 100)*0.3) + (tianker*0.4) + (Math.max(0, janker)*0.15) + (Math.min(hanker, 100)*0.15);
 
-        // --- LOGIKA GRADE PSIKOLOGI ---
-        let gradeLabel = "";
-        let gradeColor = "";
-
+        // LOGIKA GRADE
+        let gradeLabel = ""; let gradeColor = "";
         if (final >= 80) { gradeLabel = "SANGAT BAIK (ST)"; gradeColor = "#1b5e20"; }
         else if (final >= 65) { gradeLabel = "BAIK (T)"; gradeColor = "#2e7d32"; }
         else if (final >= 50) { gradeLabel = "CUKUP (C)"; gradeColor = "#f9a825"; }
         else if (final >= 40) { gradeLabel = "KURANG (K)"; gradeColor = "#d32f2f"; }
         else { gradeLabel = "SANGAT KURANG (SK)"; gradeColor = "#b71c1c"; }
 
-        // --- TAMPILKAN HASIL ---
         const resTotalEl = document.getElementById('res-total');
-        // Menampilkan Angka dan Label Grade di bawahnya
         resTotalEl.innerHTML = `
             <div style="color: ${gradeColor}">${final.toFixed(1)}</div>
             <div style="font-size: 1.2rem; font-weight: 800; color: white; background: ${gradeColor}; padding: 5px 15px; border-radius: 50px; display: inline-block; margin-top: 10px;">
@@ -318,79 +302,27 @@ function getStatusPsikologi(nilai) {
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
 
-        // GRAFIK TALI INTERAKTIF
         new Chart(document.getElementById('taliChart'), {
-    type: 'line',
-    data: {
-        labels: stats.map(d => "K" + d.col),
-        datasets: [
-            {
-                label: 'Benar',
-                data: bList,
-                borderColor: '#27ae60', // Hijau tetap ada
-                backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                borderWidth: 4,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 6,
-                pointHoverRadius: 10
+            type: 'line',
+            data: {
+                labels: stats.map(d => "K" + d.col),
+                datasets: [{
+                    label: 'Benar',
+                    data: bList,
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    borderWidth: 4,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6
+                }]
             },
-            {
-                label: 'Salah',
-                data: sList,
-                // MODIFIKASI DISINI:
-                borderColor: 'transparent',       // Garis merah jadi transparan
-                backgroundColor: 'transparent',    // Warna isi jadi transparan
-                pointBackgroundColor: 'transparent',
-                pointBorderColor: 'transparent',
-                pointHoverBackgroundColor: '#e74c3c', // Titik merah muncul saat di-hover
-                pointHoverBorderColor: '#fff',
-                borderWidth: 0,
-                pointRadius: 0,                    // Titik hilang saat diam
-                pointHoverRadius: 8,               // Titik muncul saat mouse di arah sana
-                tension: 0.4
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false }
             }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { 
-            mode: 'index', 
-            intersect: false // Ini kunci agar mouse di area kolom manapun langsung muncul tooltip
-        },
-        plugins: {
-            legend: {
-                display: true,
-                labels: {
-                    // Menyembunyikan label "Salah" di kotak legenda atas jika mau
-                    filter: function(item) {
-                        return item.text !== 'Salah';
-                    }
-                }
-            },
-            tooltip: {
-                enabled: true,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleFont: { size: 14 },
-                bodyFont: { size: 13 },
-                callbacks: {
-                    label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y} Soal`
-                }
-            }
-        },
-        scales: { 
-            y: { 
-                beginAtZero: true,
-                grid: { color: '#eee' }
-            },
-            x: {
-                grid: { display: false }
-            }
-        }
-    }
-});
+        });
 
         push(ref(db, 'rekap_skor'), { 
             nama: auth.currentUser.email, skor: final.toFixed(1), 
