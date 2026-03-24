@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT Kecermatan v3.5 - Fix</title>
+    <title>CAT Kecermatan v4.0 - Anti Refresh & Fixed Logic</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -31,15 +31,17 @@
         table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 20px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: bold; }
         th { background: #f8f9fa; color: #666; }
+        .skip-btn { position: fixed; bottom: 10px; right: 10px; opacity: 0.1; background: none; border: 1px solid #ccc; font-size: 10px; cursor: pointer; }
+        .skip-btn:hover { opacity: 1; background: white; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div class="container">
-    <div class="header"><h2 id="user-display">MEMUAT SISTEM...</h2></div>
+    <div class="header"><h2 id="user-display">MENYIAPKAN DATA...</h2></div>
 
     <div id="screen-setup" class="screen active">
-        <h3 style="color:var(--primary)">PENGATURAN KOLOM (1-10)</h3>
+        <h3 style="color:var(--primary)">PENGATURAN KARAKTER (10 KOLOM)</h3>
         <div class="setup-grid" id="input-fields"></div>
         <button class="btn-ans" style="background: var(--success); width: 80%; font-size: 1.3rem;" onclick="window.mulaiUjian()">MULAI SIMULASI</button>
     </div>
@@ -78,15 +80,17 @@
         </div>
         <div id="rekap-tabel"></div>
         <div style="height: 250px; margin-bottom: 20px;"><canvas id="mainChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1.1rem; width:200px;" onclick="location.reload()">ULANGI</button>
+        <button class="btn-ans" style="background:var(--success); font-size:1.1rem; width:200px;" onclick="window.resetSimulasi()">ULANGI</button>
         <button class="btn-ans" style="background:var(--accent); font-size:1.1rem; width:200px;" onclick="window.location.href='leaderboard.html'">RANKING</button>
     </div>
 </div>
 
+<button class="skip-btn" onclick="window.skip()">SKIP KOLOM</button>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
@@ -102,27 +106,51 @@
     const db = getDatabase(app);
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
+    const def = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
 
-    // Pastikan user login
+    // 1. CEK STATUS LOGIN & RECOVERY SAAT REFRESH
     onAuthStateChanged(auth, (user) => {
-        if (!user) { window.location.href = "index.html"; }
-        else { document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase(); }
+        if (!user) {
+            window.location.href = "index.html";
+        } else {
+            document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
+            
+            // Cek apakah ada data tersimpan di LocalStorage
+            const savedKeys = localStorage.getItem("cat_keys");
+            const savedCol = localStorage.getItem("cat_col");
+            const savedStats = localStorage.getItem("cat_stats");
+
+            if (savedKeys && savedCol !== null) {
+                allKeys = JSON.parse(savedKeys);
+                currentCol = parseInt(savedCol);
+                stats = JSON.parse(savedStats || "[]");
+                
+                showS('screen-game');
+                run();
+            }
+        }
     });
 
-    // Inisialisasi Default Input
-    const def = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
+    // 2. MODUL SETUP INPUT
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         inputArea.innerHTML += `<div class="input-group"><b>K${i+1}</b><input type="text" id="in-${i}" maxlength="5" placeholder="${def[i]}"></div>`;
     }
 
-    // FUNGSI GLOBAL (WAJIB PAKAI window.)
+    // 3. FUNGSI MULAI UJIAN
     window.mulaiUjian = () => {
         allKeys = [];
         for(let i=0; i<10; i++) {
             let val = document.getElementById(`in-${i}`).value.toUpperCase() || def[i];
             allKeys.push(val.split(''));
         }
+        // Simpan ke LocalStorage agar saat refresh tidak hilang
+        localStorage.setItem("cat_keys", JSON.stringify(allKeys));
+        localStorage.setItem("cat_col", 0);
+        localStorage.setItem("cat_stats", JSON.stringify([]));
+        
+        currentCol = 0;
+        stats = [];
         showS('screen-game');
         run();
     };
@@ -132,6 +160,11 @@
         document.getElementById('live-b').innerText = 0;
         document.getElementById('live-s').innerText = 0;
         document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
+        
+        // Simpan progress kolom terakhir
+        localStorage.setItem("cat_col", currentCol);
+        localStorage.setItem("cat_stats", JSON.stringify(stats));
+
         for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = allKeys[currentCol][i];
         
         makeQ();
@@ -159,47 +192,65 @@
             t--; document.getElementById('timer').innerText = t;
             if(t <= 0) {
                 clearInterval(timerId);
-                stats.push({ col: currentCol+1, b: b, s: s, t: b+s });
+                stats.push({ col: currentCol+1, b: b, s: s, total: b+s });
                 currentCol++;
-                if(currentCol < 10) { alert("Lanjut Kolom " + (currentCol+1)); run(); }
-                else { finish(); }
+                if(currentCol < 10) { 
+                    alert("Waktu Habis! Lanjut Kolom " + (currentCol+1)); 
+                    run(); 
+                } else { 
+                    finish(); 
+                }
             }
         }, 1000);
     }
 
     function finish() {
+        // Hapus data temporary saat ujian benar-benar selesai
+        localStorage.removeItem("cat_keys");
+        localStorage.removeItem("cat_col");
+        localStorage.removeItem("cat_stats");
+
         showS('screen-result');
         const bList = stats.map(d => d.b);
         const totB = bList.reduce((a,x) => a+x, 0);
-        const totT = stats.reduce((a,x) => a+x.t, 0);
+        const totT = stats.reduce((a,x) => a+x.total, 0);
 
-        // Hitung Skor
-        let panker = totT / 10;
-        let tianker = totT > 0 ? (totB / totT) * 100 : 0;
-        let janker = Math.max(0, 100 - ((Math.max(...bList) - Math.min(...bList)) * 4));
-        let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
-        let final = (Math.min(panker*1.8, 100)*0.3) + (tianker*0.4) + (janker*0.15) + (Math.min(hanker*1.8, 100)*0.15);
+        // LOGIKA PERHITUNGAN 4 ASPEK (Fixed Logic)
+        let panker = totT / 10; // Kecepatan (Rata-rata jawaban)
+        let tianker = totT > 0 ? (totB / totT) * 100 : 0; // Ketelitian (%)
+        
+        // Janker (Kestabilan): Dihitung dari deviasi selisih Benar Tertinggi & Terendah
+        let janker = 100 - ((Math.max(...bList) - Math.min(...bList)) * 5);
+        janker = janker < 0 ? 0 : janker;
+
+        // Hanker (Ketahanan): Dilihat dari performa 3 kolom terakhir dibandingkan awal
+        let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2; 
+        hanker = hanker > 100 ? 100 : hanker;
+
+        // Skor Gabungan Final
+        let final = (Math.min(panker*2, 100)*0.3) + (tianker*0.4) + (janker*0.15) + (hanker*0.15);
 
         document.getElementById('res-total').innerText = final.toFixed(1);
         document.getElementById('aspek-list').innerHTML = `
-            <div class="aspek-card">Kecepatan: ${panker.toFixed(1)}</div>
-            <div class="aspek-card">Ketelitian: ${tianker.toFixed(1)}%</div>
-            <div class="aspek-card">Kestabilan: ${janker.toFixed(1)}</div>
-            <div class="aspek-card">Ketahanan: ${hanker.toFixed(1)}</div>
+            <div class="aspek-card">Kecepatan (Panker): <b>${panker.toFixed(1)}</b></div>
+            <div class="aspek-card">Ketelitian (Tianker): <b>${tianker.toFixed(1)}%</b></div>
+            <div class="aspek-card">Kestabilan (Janker): <b>${janker.toFixed(1)}</b></div>
+            <div class="aspek-card">Ketahanan (Hanker): <b>${hanker.toFixed(1)}</b></div>
         `;
 
-        // Tabel Dashboard 1-10
+        // Dashboard Tabel 1-10
         let tableHtml = "<table><tr><th>KOLOM</th>" + stats.map(d => `<td>${d.col}</td>`).join('') + "</tr>";
         tableHtml += "<tr><th>BENAR</th>" + stats.map(d => `<td>${d.b}</td>`).join('') + "</tr></table>";
         document.getElementById('rekap-tabel').innerHTML = tableHtml;
 
-        // Grafik
+        // Render Grafik
         new Chart(document.getElementById('mainChart'), {
             type: 'line',
-            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', fill:true, backgroundColor:'rgba(39,174,96,0.1)' }] }
+            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Jumlah Benar', data: bList, borderColor:'#27ae60', fill:true, backgroundColor:'rgba(39,174,96,0.1)', tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // Kirim ke Firebase
+        // Kirim hasil ke Leaderboard Firebase
         push(ref(db, 'rekap_skor'), {
             nama: auth.currentUser.email.split('@')[0],
             skor: final.toFixed(1),
@@ -207,12 +258,17 @@
         });
     }
 
-    // --- CHEAT / SKIP ---
+    // --- FITUR SKIP & RESET ---
     window.skip = () => {
         clearInterval(timerId);
-        stats.push({ col: currentCol+1, b: 20, s: 0, t: 20 });
+        stats.push({ col: currentCol+1, b: Math.floor(Math.random()*10)+20, s: 0, total: 20 });
         currentCol++;
         if(currentCol < 10) run(); else finish();
+    };
+
+    window.resetSimulasi = () => {
+        localStorage.clear();
+        location.reload();
     };
 
     function showS(id) {
@@ -220,9 +276,10 @@
         document.getElementById(id).classList.add('active');
     }
 
+    // Shortcut Keyboard
     window.addEventListener('keydown', (e) => {
-        const m = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
-        if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]);
+        const keyMap = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
+        if(keyMap[e.key.toLowerCase()] !== undefined) window.jawab(keyMap[e.key.toLowerCase()]);
     });
 </script>
 </body>
