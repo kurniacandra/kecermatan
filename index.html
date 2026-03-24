@@ -3,54 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOGIN - CAT KECERMATAN</title>
+    <title>Login - CAT Kecermatan</title>
     <style>
-        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; }
+        :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; border-bottom: 5px solid var(--accent); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #2c3e50; }
-        .msg { color: #e74c3c; font-size: 0.8rem; margin-top: 10px; font-weight: bold; }
+        .login-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid var(--accent); }
+        h2 { color: var(--primary); margin-bottom: 10px; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--accent); }
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 15px; }
+        .btn-login:hover { background: #2c3e50; }
+        .divider { height: 1px; background: #eee; margin: 20px 0; position: relative; }
+        .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #999; font-size: 0.8rem; }
+        .btn-wa { display: block; text-decoration: none; width: 100%; padding: 12px; background: #25D366; color: white; border-radius: 8px; font-weight: bold; box-sizing: border-box; transition: 0.3s; }
+        .btn-wa:hover { background: #128C7E; transform: translateY(-2px); }
     </style>
 </head>
 <body>
-<div class="login-box">
-    <h2 style="margin-bottom: 20px; color: var(--primary);">MASUK PESERTA</h2>
-    <input type="email" id="email" placeholder="Email">
+
+<div class="login-card">
+    <h2>CAT KECERMATAN</h2>
+    <p>Simulasi Persiapan Masuk Kedinasan & AKPOL</p>
+    <input type="email" id="email" placeholder="Email Peserta">
     <input type="password" id="password" placeholder="Password">
-    <button id="btn-login">LOGIN</button>
-    <div id="message" class="msg"></div>
+    <button onclick="window.login()" id="btn-text" class="btn-login">MASUK SISTEM</button>
+
+    <div class="divider"><span>BELUM PUNYA AKUN?</span></div>
+
+    <a href="https://wa.me/62895401605009?text=Halo%20Admin,%20saya%20mau%20daftar%20akun%20CAT%20Kecermatan.%20Mohon%20info%20selengkapnya." 
+       target="_blank" 
+       class="btn-wa">
+       DAFTAR VIA WHATSAPP
+    </a>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    const firebaseConfig = { 
-        apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", 
-        authDomain: "simulasi-2b93b.firebaseapp.com", 
-        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", 
-        projectId: "simulasi-2b93b", 
-        storageBucket: "simulasi-2b93b.firebasestorage.app", 
-        appId: "1:562508858666:web:fa63f71ec175c675e64a53" 
+    const firebaseConfig = {
+        apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
+        authDomain: "simulasi-2b93b.firebaseapp.com",
+        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com",
+        projectId: "simulasi-2b93b",
+        storageBucket: "simulasi-2b93b.firebasestorage.app",
+        appId: "1:562508858666:web:fa63f71ec175c675e64a53"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    document.getElementById('btn-login').onclick = async () => {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
-        const m = document.getElementById('message');
-        
-        m.innerText = "Mengecek Sesi...";
-        try {
-            await signInWithEmailAndPassword(auth, e, p);
-            window.location.href = "soal.html";
-        } catch (err) {
-            m.innerText = "Gagal Masuk! Periksa Email/Password.";
-        }
+    window.login = () => {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        const btn = document.getElementById('btn-text');
+
+        if(!email || !pass) { alert("Harap isi Email dan Password!"); return; }
+
+        btn.innerText = "MEMVALIDASI...";
+        btn.disabled = true;
+
+        signInWithEmailAndPassword(auth, email, pass)
+            .then((userCredential) => {
+                // Buat ID Sesi baru setiap kali login
+                const newSessId = 'sess_' + Math.random().toString(36).substr(2, 9);
+                const sRef = ref(db, 'user_sessions/' + userCredential.user.uid);
+                
+                // Simpan ID sesi baru ke database sebelum pindah halaman
+                set(sRef, { sessionId: newSessId }).then(() => {
+                    window.location.href = "soal.html";
+                });
+            })
+            .catch((error) => {
+                btn.innerText = "MASUK SISTEM";
+                btn.disabled = false;
+                if (error.code === 'auth/user-not-found') {
+                    alert("Akun tidak terdaftar.");
+                } else if (error.code === 'auth/wrong-password') {
+                    alert("Password salah!");
+                } else {
+                    alert("Gagal Login: Periksa kembali email/koneksi.");
+                }
+            });
     };
 </script>
 </body>
