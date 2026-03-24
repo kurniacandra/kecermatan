@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script>
+    // Proteksi: Cek apakah user sudah login melalui index.html
+    if (sessionStorage.getItem("statusLogin") !== "aktif") {
+        alert("Akses ditolak! Silakan login terlebih dahulu.");
+        window.location.href = "index.html";
+    }
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KurniaCandra - Simulasi Kecermatan Polri</title>
