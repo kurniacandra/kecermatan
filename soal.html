@@ -291,50 +291,77 @@
 
         // GRAFIK TALI INTERAKTIF
         new Chart(document.getElementById('taliChart'), {
-            type: 'line',
-            data: {
-                labels: stats.map(d => "K"+d.col),
-                datasets: [
-                    {
-                        label: 'Benar',
-                        data: bList,
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                        borderWidth: 4,
-                        tension: 0.4, // EFEK TALI
-                        fill: true,
-                        pointRadius: 6,
-                        pointHoverRadius: 10
-                    },
-                    {
-                        label: 'Salah',
-                        data: sList,
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        borderWidth: 4,
-                        tension: 0.4, // EFEK TALI
-                        fill: true,
-                        pointRadius: 6,
-                        pointHoverRadius: 10
-                    }
-                ]
+    type: 'line',
+    data: {
+        labels: stats.map(d => "K" + d.col),
+        datasets: [
+            {
+                label: 'Benar',
+                data: bList,
+                borderColor: '#27ae60', // Hijau tetap ada
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                borderWidth: 4,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 6,
+                pointHoverRadius: 10
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        padding: 10,
-                        callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} Soal`
-                        }
-                    }
-                },
-                scales: { y: { beginAtZero: true } }
+            {
+                label: 'Salah',
+                data: sList,
+                // MODIFIKASI DISINI:
+                borderColor: 'transparent',       // Garis merah jadi transparan
+                backgroundColor: 'transparent',    // Warna isi jadi transparan
+                pointBackgroundColor: 'transparent',
+                pointBorderColor: 'transparent',
+                pointHoverBackgroundColor: '#e74c3c', // Titik merah muncul saat di-hover
+                pointHoverBorderColor: '#fff',
+                borderWidth: 0,
+                pointRadius: 0,                    // Titik hilang saat diam
+                pointHoverRadius: 8,               // Titik muncul saat mouse di arah sana
+                tension: 0.4
             }
-        });
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { 
+            mode: 'index', 
+            intersect: false // Ini kunci agar mouse di area kolom manapun langsung muncul tooltip
+        },
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    // Menyembunyikan label "Salah" di kotak legenda atas jika mau
+                    filter: function(item) {
+                        return item.text !== 'Salah';
+                    }
+                }
+            },
+            tooltip: {
+                enabled: true,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: { size: 14 },
+                bodyFont: { size: 13 },
+                callbacks: {
+                    label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y} Soal`
+                }
+            }
+        },
+        scales: { 
+            y: { 
+                beginAtZero: true,
+                grid: { color: '#eee' }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
 
         push(ref(db, 'rekap_skor'), { 
             nama: auth.currentUser.email, skor: final.toFixed(1), 
