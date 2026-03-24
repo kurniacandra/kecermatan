@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v14.1 - Professional Look</title>
+    <title>CAT KECERMATAN v15.0 - Stacked Chart & Persistence</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -49,7 +49,7 @@
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Simbol terakhir Anda telah dimuat otomatis.</p>
+        <p style="font-size: 0.8rem; color: #666;">Isi simbol untuk 10 kolom pengerjaan.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
             <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ACAK SIMBOL</button>
@@ -60,7 +60,7 @@
     <div id="screen-game" class="screen">
         <div class="stats-bar">
             <div id="col-title" style="font-weight: 900; font-size: 1.2rem;">KOLOM 1</div>
-            <div class="timer" id="timer">5</div>
+            <div class="timer" id="timer">15</div>
             <div style="text-align: right;">
                 <b style="color:var(--success)">B: <span id="live-b">0</span></b><br>
                 <b style="color:var(--danger)">S: <span id="live-s">0</span></b>
@@ -85,7 +85,7 @@
         </div>
         
         <div id="rekap-tabel" style="overflow-x:auto;"></div>
-        <div style="height: 200px; margin: 20px 0;"><canvas id="mainChart"></canvas></div>
+        <div style="height: 250px; margin: 20px 0;"><canvas id="stackedBarChart"></canvas></div>
 
         <div class="history-section">
             <h3 style="text-align: center;">RIWAYAT SKOR ANDA</h3>
@@ -102,7 +102,7 @@
             </table>
         </div>
 
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">UJIAN LAGI</button>
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.resetUjian()">UJIAN BARU</button>
     </div>
 </div>
 
@@ -123,17 +123,9 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
+    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
 
-    // FITUR: REMEMBER SYMBOLS
-    function loadSavedSymbols() {
-        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
-        for(let i=0; i<10; i++) {
-            const el = document.getElementById(`in-${i}`);
-            if(saved[i]) el.value = saved[i];
-        }
-    }
-
+    // VALIDASI INPUT
     function validate(input, group) {
         const val = input.value.toUpperCase();
         const isDuplicate = new Set(val).size !== val.length;
@@ -141,6 +133,7 @@
         group.classList.remove('error'); return true;
     }
 
+    // BUILD INPUTS
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
@@ -152,8 +145,6 @@
         inp.addEventListener('input', () => validate(inp, div));
     }
 
-    loadSavedSymbols();
-
     window.autoFill = () => {
         const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+=?";
         for(let i=0; i<10; i++) {
@@ -163,10 +154,64 @@
         }
     };
 
+    // --- FITUR 2: PERSISTENCE ENGINE (LOAD PROGRESS) ---
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
+        checkProgress(); // Cek apakah ada ujian yang gantung
     });
+
+    function checkProgress() {
+        const savedProgress = localStorage.getItem('cat_kecermatan_progress');
+        if (savedProgress) {
+            const data = JSON.parse(savedProgress);
+            // Validasi data progress
+            if (data.allKeys && data.stats && data.currentCol < 10 && data.status === 'running') {
+                if (confirm(`Sesi ujian sebelumnya terdeteksi di Kolom ${data.currentCol + 1}. Ingin melanjutkan?`)) {
+                    allKeys = data.allKeys;
+                    stats = data.stats;
+                    currentCol = data.currentCol;
+                    loadSymbolsToInput(allKeys);
+                    showS('screen-game');
+                    run();
+                    return;
+                }
+            }
+        }
+        // Jika tidak ada progress atau user menolak lanjut
+        resetStorage(false); // Clear progress but keep symbols
+        loadSavedSymbols(); // Load last used symbols to setup
+    }
+
+    function loadSymbolsToInput(keysArray) {
+        keysArray.forEach((symbols, i) => {
+            document.getElementById(`in-${i}`).value = symbols.join('');
+        });
+    }
+
+    function loadSavedSymbols() {
+        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
+        for(let i=0; i<10; i++) {
+            const el = document.getElementById(`in-${i}`);
+            if(saved[i]) el.value = saved[i];
+        }
+    }
+
+    // SIMPAN PROGRESS TIAP DETIK/JAWABAN
+    function saveProgress(status) {
+        const data = {
+            allKeys: allKeys,
+            stats: stats,
+            currentCol: currentCol,
+            status: status // 'running' atau 'finished'
+        };
+        localStorage.setItem('cat_kecermatan_progress', JSON.stringify(data));
+    }
+
+    function resetStorage(clearSymbols = false) {
+        localStorage.removeItem('cat_kecermatan_progress');
+        if(clearSymbols) localStorage.removeItem('last_symbols');
+    }
 
     window.mulai = () => {
         allKeys = []; let valid = true; let toSave = [];
@@ -177,12 +222,15 @@
             toSave.push(el.value.toUpperCase());
         }
         if(!valid) { alert("Perbaiki kolom yang merah!"); return; }
+        
         localStorage.setItem('last_symbols', JSON.stringify(toSave)); // Save symbols
-        currentCol = 0; stats = []; showS('screen-game'); run();
+        currentCol = 0; stats = []; 
+        saveProgress('running'); // Mulai simpan progress
+        showS('screen-game'); run();
     };
 
     function run() {
-        b = 0; s = 0;
+        b = 0; s = 0; isPaused = false;
         document.getElementById('live-b').innerText = 0; document.getElementById('live-s').innerText = 0;
         document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
         let h = ""; allKeys[currentCol].forEach((k, i) => {
@@ -198,17 +246,25 @@
         document.getElementById('question').innerText = qArray.join('');
     }
 
-    window.jawab = (idx) => { if(idx === correctIdx) b++; else s++; document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; makeQ(); };
+    window.jawab = (idx) => { 
+        if(isPaused) return;
+        if(idx === correctIdx) b++; else s++; 
+        document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; 
+        makeQ(); 
+    };
 
     function startT() {
-        let t = 15; // DURASI UJI COBA
+        let t = 15; // DURASI 15 DETIK
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
             t--; document.getElementById('timer').innerText = t;
             if(t <= 0) {
-                clearInterval(timerId); stats.push({ col: currentCol + 1, b: b, s: s });
+                clearInterval(timerId); 
+                isPaused = true;
+                stats.push({ col: currentCol + 1, b: b, s: s });
                 currentCol++;
+                saveProgress('running'); // Update progress sebelum jeda
                 if(currentCol < 10) tampilkanJeda(); else finish();
             }
         }, 1000);
@@ -220,32 +276,27 @@
         const intJ = setInterval(() => { sisa--; document.getElementById('jeda-countdown').innerText = sisa; if(sisa <= 0) { clearInterval(intJ); p.style.display = 'none'; run(); }}, 1000);
     }
 
-    // FITUR: HISTORY PRIBADI
     function loadMyHistory() {
         const myEmail = auth.currentUser.email;
         const historyQuery = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(myEmail));
-        
         onValue(historyQuery, (snapshot) => {
             const data = snapshot.val();
             let html = "";
             if(data) {
-                // Balik urutan agar yang terbaru di atas, ambil 5 saja
                 const list = Object.values(data).reverse().slice(0, 5);
-                list.forEach(item => {
-                    html += `<tr><td>${item.waktu}</td><td><span style="color:var(--success)">${item.skor}</span></td></tr>`;
-                });
-            } else {
-                html = "<tr><td colspan='2'>Belum ada riwayat ujian.</td></tr>";
-            }
+                list.forEach(item => { html += `<tr><td>${item.waktu}</td><td><span style="color:var(--success)">${item.skor}</span></td></tr>`; });
+            } else { html = "<tr><td colspan='2'>Belum ada riwayat ujian.</td></tr>"; }
             document.getElementById('history-body').innerHTML = html;
         });
     }
 
     function finish() {
         showS('screen-result');
+        saveProgress('finished'); // Tandai ujian selesai
         const bList = stats.map(d => d.b);
+        const sList = stats.map(d => d.s); // Ambil data salah
         const totB = bList.reduce((a,x) => a+x, 0);
-        const totS = stats.reduce((a,x) => a+x.s, 0);
+        const totS = sList.reduce((a,x) => a+x, 0);
         const totT = totB + totS;
 
         let panker = totT / 10;
@@ -255,8 +306,6 @@
         let final = (Math.min(panker*2, 100)*0.3) + (tianker*0.4) + (Math.max(0, janker)*0.15) + (Math.min(hanker, 100)*0.15);
 
         document.getElementById('res-total').innerText = final.toFixed(1);
-        
-        // PENGGANTIAN NAMA SINGKATAN JADI LENGKAP
         document.getElementById('aspek-list').innerHTML = `
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Kecepatan: ${panker.toFixed(1)}</div>
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketelitian: ${tianker.toFixed(1)}%</div>
@@ -264,38 +313,35 @@
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
 
-        // INI GRAFIK VERSI SEBELUMNYA (BERSIH)
-        new Chart(document.getElementById('mainChart'), {
-            type: 'line', 
-            data: { 
-                labels: stats.map(d => "K"+d.col), 
-                datasets: [{ 
-                    label:'Jawaban Benar', 
-                    data: bList, 
-                    borderColor:'#27ae60', 
-                    tension:0.4, // Membuat garis melengkung halus
-                    fill:true, 
-                    backgroundColor:'rgba(39,174,96,0.1)', // Hijau transparan di bawah garis
-                    borderWidth: 3, // Garis lebih tebal
-                    pointBackgroundColor: '#fff', // Titik putih
-                    pointBorderColor: '#27ae60', // Pinggiran titik hijau
-                    pointRadius: 5 // Ukuran titik
-                }] 
+        // --- FITUR 1: GRAFIK BAR TUMPUK (BENAR VS SALAH) ---
+        new Chart(document.getElementById('stackedBarChart'), {
+            type: 'bar',
+            data: {
+                labels: stats.map(d => "K"+d.col),
+                datasets: [
+                    {
+                        label: 'Benar',
+                        data: bList,
+                        backgroundColor: '#27ae60', // Hijau
+                        borderRadius: 5
+                    },
+                    {
+                        label: 'Salah',
+                        data: sList,
+                        backgroundColor: '#e74c3c', // Merah
+                        borderRadius: 5
+                    }
+                ]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Grafik mengikuti container
+                maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { display: false } // Hilangkan garis grid kotak
-                    },
-                    x: {
-                        grid: { display: false } // Hilangkan garis grid kotak
-                    }
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, beginAtZero: true }
                 },
                 plugins: {
-                    legend: { display: false } // Hilangkan legend kotak di atas
+                    legend: { position: 'bottom' }
                 }
             }
         });
@@ -310,7 +356,12 @@
         loadMyHistory();
     }
 
-    window.ulang = () => { location.reload(); };
+    // Tombol Ujian Baru
+    window.resetUjian = () => {
+        resetStorage(false); // Clear progress gantung
+        location.reload(); 
+    };
+
     function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
 
