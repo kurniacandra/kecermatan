@@ -53,4 +53,299 @@
         <p style="font-size: 0.8rem; color: #666;">Isi simbol untuk 10 kolom pengerjaan.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
-            <button onclick="autoFill()" style="flex:
+            <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ACAK SIMBOL</button>
+            <button onclick="window.mulai()" style="flex:2; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1.1rem;">MULAI UJIAN</button>
+        </div>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div class="stats-bar">
+            <div id="col-title" style="font-weight: 900; font-size: 1.2rem;">KOLOM 1</div>
+            <div class="timer" id="timer">15</div>
+            <div style="text-align: right;">
+                <b style="color:var(--success)">B: <span id="live-b">0</span></b><br>
+                <b style="color:var(--danger)">S: <span id="live-s">0</span></b>
+            </div>
+        </div>
+        <div class="key-row" id="key-container"></div>
+        <div id="question">----</div>
+        <div class="ans-grid">
+            <button class="btn-ans" onclick="window.jawab(0)">A</button>
+            <button class="btn-ans" onclick="window.jawab(1)">B</button>
+            <button class="btn-ans" onclick="window.jawab(2)">C</button>
+            <button class="btn-ans" onclick="window.jawab(3)">D</button>
+            <button class="btn-ans" onclick="window.jawab(4)">E</button>
+        </div>
+    </div>
+
+    <div id="screen-result" class="screen">
+        <h3 style="margin:0">HASIL PENILAIAN</h3>
+        <div class="final-score-box">
+            <h1 style="font-size: 4.5rem; margin:0;" id="res-total">0</h1>
+            <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
+        </div>
+        
+        <div style="height: 300px; margin: 20px 0;"><canvas id="taliChart"></canvas></div>
+
+        <div class="history-section">
+            <h3 style="text-align: center;">RIWAYAT SKOR ANDA</h3>
+            <table id="user-history-table">
+                <thead>
+                    <tr style="background: #eee;">
+                        <th>Waktu</th>
+                        <th>Skor Akhir</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="2">Memuat riwayat...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.resetUjian()">UJIAN BARU</button>
+    </div>
+</div>
+
+<div id="popup-jeda" class="overlay-jeda">
+    <div class="jeda-box">
+        <h2 style="margin:0;">KOLOM SELESAI</h2>
+        <div id="jeda-countdown" style="font-size: 6rem; font-weight: 900; color: var(--danger); margin: 10px 0;">3</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", authDomain: "simulasi-2b93b.firebaseapp.com", databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", projectId: "simulasi-2b93b", storageBucket: "simulasi-2b93b.firebasestorage.app", appId: "1:562508858666:web:fa63f71ec175c675e64a53" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
+
+    // VALIDASI INPUT
+    function validate(input, group) {
+        const val = input.value.toUpperCase();
+        const isDuplicate = new Set(val).size !== val.length;
+        if (isDuplicate || val.length < 5) { group.classList.add('error'); return false; }
+        group.classList.remove('error'); return true;
+    }
+
+    // BUILD INPUTS
+    const inputArea = document.getElementById('input-fields');
+    for(let i=0; i<10; i++) {
+        const div = document.createElement('div');
+        div.className = 'input-group'; div.id = `g-${i}`;
+        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE" value="ABCDE"> 
+        <div class="error-msg">Wajib 5 Karakter Unik!</div>`;
+        inputArea.appendChild(div);
+        const inp = div.querySelector('input');
+        inp.addEventListener('input', () => validate(inp, div));
+    }
+
+    window.autoFill = () => {
+        const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        for(let i=0; i<10; i++) {
+            let chunk = pool.split("").sort(() => Math.random() - 0.5).slice(0, 5).join("");
+            document.getElementById(`in-${i}`).value = chunk;
+            validate(document.getElementById(`in-${i}`), document.getElementById(`g-${i}`));
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) { window.location.href = "index.html"; return; }
+        document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
+        checkProgress();
+    });
+
+    function checkProgress() {
+        const savedProgress = localStorage.getItem('cat_kecermatan_progress');
+        if (savedProgress) {
+            const data = JSON.parse(savedProgress);
+            if (data.allKeys && data.stats && data.currentCol < 10 && data.status === 'running') {
+                if (confirm(`Sesi Kolom ${data.currentCol + 1} terdeteksi. Lanjut?`)) {
+                    allKeys = data.allKeys; stats = data.stats; currentCol = data.currentCol;
+                    loadSymbolsToInput(allKeys); showS('screen-game'); run(); return;
+                }
+            }
+        }
+        resetStorage(false); loadSavedSymbols();
+    }
+
+    function loadSymbolsToInput(keysArray) {
+        keysArray.forEach((symbols, i) => { document.getElementById(`in-${i}`).value = symbols.join(''); });
+    }
+
+    function loadSavedSymbols() {
+        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
+        for(let i=0; i<10; i++) { if(saved[i]) document.getElementById(`in-${i}`).value = saved[i]; }
+    }
+
+    function saveProgress(status) {
+        const data = { allKeys, stats, currentCol, status };
+        localStorage.setItem('cat_kecermatan_progress', JSON.stringify(data));
+    }
+
+    function resetStorage(clearSymbols = false) {
+        localStorage.removeItem('cat_kecermatan_progress');
+        if(clearSymbols) localStorage.removeItem('last_symbols');
+    }
+
+    window.mulai = () => {
+        allKeys = []; let valid = true; let toSave = [];
+        for(let i=0; i<10; i++) {
+            const el = document.getElementById(`in-${i}`);
+            if(!validate(el, document.getElementById(`g-${i}`))) valid = false;
+            allKeys.push(el.value.toUpperCase().split(''));
+            toSave.push(el.value.toUpperCase());
+        }
+        if(!valid) { alert("Perbaiki kolom yang merah!"); return; }
+        localStorage.setItem('last_symbols', JSON.stringify(toSave));
+        currentCol = 0; stats = []; saveProgress('running');
+        showS('screen-game'); run();
+    };
+
+    function run() {
+        b = 0; s = 0; isPaused = false;
+        document.getElementById('live-b').innerText = 0; document.getElementById('live-s').innerText = 0;
+        document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
+        let h = ""; allKeys[currentCol].forEach((k, i) => {
+            h += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v">${k}</div></div>`;
+        });
+        document.getElementById('key-container').innerHTML = h;
+        makeQ(); startT();
+    }
+
+    function makeQ() {
+        correctIdx = Math.floor(Math.random() * 5);
+        let qArray = allKeys[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
+        document.getElementById('question').innerText = qArray.join('');
+    }
+
+    window.jawab = (idx) => { 
+        if(isPaused) return;
+        if(idx === correctIdx) b++; else s++; 
+        document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; 
+        makeQ(); 
+    };
+
+    function startT() {
+        let t = 15;
+        document.getElementById('timer').innerText = t;
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            t--; document.getElementById('timer').innerText = t;
+            if(t <= 0) {
+                clearInterval(timerId); isPaused = true;
+                stats.push({ col: currentCol + 1, b: b, s: s });
+                currentCol++; saveProgress('running');
+                if(currentCol < 10) tampilkanJeda(); else finish();
+            }
+        }, 1000);
+    }
+
+    function tampilkanJeda() {
+        const p = document.getElementById('popup-jeda'); let sisa = 3;
+        p.style.display = 'flex'; document.getElementById('jeda-countdown').innerText = sisa;
+        const intJ = setInterval(() => { sisa--; document.getElementById('jeda-countdown').innerText = sisa; if(sisa <= 0) { clearInterval(intJ); p.style.display = 'none'; run(); }}, 1000);
+    }
+
+    function loadMyHistory() {
+        const myEmail = auth.currentUser.email;
+        const historyQuery = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(myEmail));
+        onValue(historyQuery, (snapshot) => {
+            const data = snapshot.val();
+            let html = "";
+            if(data) {
+                const list = Object.values(data).reverse().slice(0, 5);
+                list.forEach(item => { html += `<tr><td>${item.waktu}</td><td><span style="color:var(--success)">${item.skor}</span></td></tr>`; });
+            } else { html = "<tr><td colspan='2'>Belum ada riwayat.</td></tr>"; }
+            document.getElementById('history-body').innerHTML = html;
+        });
+    }
+
+    function finish() {
+        showS('screen-result');
+        saveProgress('finished');
+        const bList = stats.map(d => d.b);
+        const sList = stats.map(d => d.s);
+        const totB = bList.reduce((a,x) => a+x, 0);
+        const totS = sList.reduce((a,x) => a+x, 0);
+        const totT = totB + totS;
+
+        let panker = totT / 10;
+        let tianker = totT > 0 ? (totB / totT) * 100 : 0;
+        let janker = 100 - ((Math.max(...bList) - Math.min(...bList)) * 5);
+        let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
+        let final = (Math.min(panker*2, 100)*0.3) + (tianker*0.4) + (Math.max(0, janker)*0.15) + (Math.min(hanker, 100)*0.15);
+
+        document.getElementById('res-total').innerText = final.toFixed(1);
+        document.getElementById('aspek-list').innerHTML = `
+            <div style="background:#f1f1f1;padding:8px;border-radius:5px">Kecepatan: ${panker.toFixed(1)}</div>
+            <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketelitian: ${tianker.toFixed(1)}%</div>
+            <div style="background:#f1f1f1;padding:8px;border-radius:5px">Kestabilan: ${Math.max(0,janker).toFixed(1)}</div>
+            <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
+        `;
+
+        // GRAFIK TALI INTERAKTIF
+        new Chart(document.getElementById('taliChart'), {
+            type: 'line',
+            data: {
+                labels: stats.map(d => "K"+d.col),
+                datasets: [
+                    {
+                        label: 'Benar',
+                        data: bList,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 4,
+                        tension: 0.4, // EFEK TALI
+                        fill: true,
+                        pointRadius: 6,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Salah',
+                        data: sList,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 4,
+                        tension: 0.4, // EFEK TALI
+                        fill: true,
+                        pointRadius: 6,
+                        pointHoverRadius: 10
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    tooltip: {
+                        enabled: true,
+                        padding: 10,
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} Soal`
+                        }
+                    }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        push(ref(db, 'rekap_skor'), { 
+            nama: auth.currentUser.email, skor: final.toFixed(1), 
+            waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID') 
+        });
+        loadMyHistory();
+    }
+
+    window.resetUjian = () => { resetStorage(false); location.reload(); };
+    function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
+</script>
+</body>
+</html>
