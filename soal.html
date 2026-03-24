@@ -3,75 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT Kecermatan Official - System v3.0</title>
+    <title>CAT Kecermatan - Dashboard Utama</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 15px; display: flex; justify-content: center; user-select: none; }
-        .container { background: white; width: 100%; max-width: 850px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 4px solid var(--accent); }
-        .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
+        :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; user-select: none; }
+        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; border-bottom: 5px solid var(--accent); }
+        .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
-        .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-        input[type="text"] { flex: 1; padding: 8px; border: none; text-align: center; font-weight: bold; text-transform: uppercase; }
-        .timer-box { font-size: 2.8rem; font-weight: 900; color: var(--danger); min-width: 80px; }
-        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
-        .key-box { border: 2px solid #333; border-radius: 8px; background: #fff; }
-        .key-head { background: #333; color: white; padding: 5px; font-weight: bold; }
-        .key-val { font-size: 2.2rem; padding: 12px; font-weight: bold; }
-        #question { font-size: 5.5rem; font-weight: 900; letter-spacing: 25px; margin: 40px 0; color: #000; min-height: 100px; }
-        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
-        .btn-ans { padding: 22px; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .btn-ans:active { transform: scale(0.92); background: var(--accent); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        .total-score { background: var(--primary); color: white; padding: 20px; border-radius: 12px; font-size: 3.5rem; font-weight: 900; color: var(--accent); margin: 15px 0; }
+        
+        /* Setup Grid */
+        .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 20px 0; }
+        .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; display: flex; align-items: center; }
+        input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; text-transform: uppercase; outline: none; }
+        
+        /* Game UI */
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
+        .timer { font-size: 3.2rem; font-weight: 800; color: var(--danger); }
+        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px; }
+        .key-box { border: 2px solid #2c3e50; border-radius: 10px; overflow: hidden; background: #fff; }
+        .key-h { background: #2c3e50; color: white; padding: 5px; font-size: 0.9rem; font-weight: bold; }
+        .key-v { font-size: 2.5rem; padding: 10px; font-weight: 900; }
+        
+        #question { font-size: 5.5rem; font-weight: 900; letter-spacing: 20px; margin: 35px 0; color: #1a252f; min-height: 130px; }
+        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .btn-ans { padding: 25px 0; font-size: 2.2rem; border: none; background: var(--primary); color: white; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.1s; }
+        .btn-ans:active { transform: scale(0.95); background: var(--accent); }
+
+        /* Dashboard Result */
+        .final-score-box { background: var(--primary); color: var(--accent); padding: 30px; border-radius: 15px; margin: 20px 0; }
+        .final-val { font-size: 5rem; font-weight: 900; margin: 0; }
+        .aspek-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .aspek-card { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; color: white; text-align: left; border-left: 3px solid var(--accent); }
+        
+        .rekap-table-container { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: bold; }
+        th { background: #f8f9fa; color: #666; font-size: 0.75rem; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div class="container">
-    <div class="header"><h1 id="peserta-nama">CAT SYSTEM</h1></div>
+    <div class="header">
+        <h2 id="user-display" style="margin:0; letter-spacing: 2px;">MEMUAT...</h2>
+    </div>
 
     <div id="screen-setup" class="screen active">
-        <h3>PENGATURAN KARAKTER KOLOM</h3>
+        <h3 style="color:var(--primary)">PENGATURAN KOLOM (1-10)</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 100%; max-width: 400px; font-size: 1.2rem;" onclick="window.mulaiUjianBaru()">MULAI SIMULASI</button>
+        <button class="btn-ans" style="background: var(--success); width: 80%; font-size: 1.3rem;" onclick="window.mulai()">GAS SIMULASI</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div id="col-info" style="font-weight: bold; font-size: 1.5rem; color: var(--primary);">KOLOM 1</div>
-            <div class="timer-box" id="timer">60</div>
-            <div style="font-size: 1.2rem; font-weight: bold;">
-                B: <span id="live-b" style="color:var(--success)">0</span> | 
-                S: <span id="live-s" style="color:var(--danger)">0</span>
+        <div class="stats-bar">
+            <div id="col-title" style="font-weight: 900; font-size: 1.6rem;">KOLOM 1</div>
+            <div class="timer" id="timer">60</div>
+            <div style="text-align: right;">
+                <b style="color:var(--success)">B: <span id="live-b">0</span></b><br>
+                <b style="color:var(--danger)">S: <span id="live-s">0</span></b>
             </div>
         </div>
         <div class="key-row">
-            <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
-            <div class="key-box"><div class="key-head">B</div><div class="key-val" id="v1"></div></div>
-            <div class="key-box"><div class="key-head">C</div><div class="key-val" id="v2"></div></div>
-            <div class="key-box"><div class="key-head">D</div><div class="key-val" id="v3"></div></div>
-            <div class="key-box"><div class="key-head">E</div><div class="key-val" id="v4"></div></div>
+            <div class="key-box"><div class="key-h">A</div><div class="key-v" id="v0"></div></div>
+            <div class="key-box"><div class="key-h">B</div><div class="key-v" id="v1"></div></div>
+            <div class="key-box"><div class="key-h">C</div><div class="key-v" id="v2"></div></div>
+            <div class="key-box"><div class="key-h">D</div><div class="key-v" id="v3"></div></div>
+            <div class="key-box"><div class="key-h">E</div><div class="key-v" id="v4"></div></div>
         </div>
         <div id="question">----</div>
         <div class="ans-grid">
-            <button class="btn-ans" onclick="window.jawabSoal(0)">A</button>
-            <button class="btn-ans" onclick="window.jawabSoal(1)">B</button>
-            <button class="btn-ans" onclick="window.jawabSoal(2)">C</button>
-            <button class="btn-ans" onclick="window.jawabSoal(3)">D</button>
-            <button class="btn-ans" onclick="window.jawabSoal(4)">E</button>
+            <button class="btn-ans" onclick="window.jawab(0)">A</button>
+            <button class="btn-ans" onclick="window.jawab(1)">B</button>
+            <button class="btn-ans" onclick="window.jawab(2)">C</button>
+            <button class="btn-ans" onclick="window.jawab(3)">D</button>
+            <button class="btn-ans" onclick="window.jawab(4)">E</button>
         </div>
     </div>
 
     <div id="screen-result" class="screen">
-        <h2>HASIL SIMULASI AKHIR</h2>
-        <div class="total-score" id="res-total">0</div>
-        <div id="res-table"></div>
-        <div style="height: 250px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="window.resetUjian()">ULANGI DARI AWAL</button>
+        <h2 style="margin:0">HASIL AKHIR SIMULASI</h2>
+        <div class="final-score-box">
+            <p style="margin:0; font-weight:bold; color:white;">SKOR GABUNGAN</p>
+            <h1 class="final-val" id="res-total">0</h1>
+            <div class="aspek-container" id="aspek-list"></div>
+        </div>
+
+        <div class="rekap-table-container">
+            <table id="table-skor"></table>
+        </div>
+        
+        <div style="height: 250px; margin-bottom: 20px;">
+            <canvas id="mainChart"></canvas>
+        </div>
+        
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button class="btn-ans" style="background:var(--success); font-size:1.1rem; width:180px;" onclick="window.reset()">ULANGI</button>
+            <button class="btn-ans" style="background:var(--accent); font-size:1.1rem; width:180px;" onclick="window.location.href='leaderboard.html'">RANKING</button>
+        </div>
     </div>
 </div>
 
@@ -93,83 +123,80 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Variabel Global Internal (Module)
-    let allKeys = [], currentColumn = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
+    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // --- PROTEKSI & RECOVERY ---
+    // --- AUTH & RECOVERY ---
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
-        document.getElementById('peserta-nama').innerText = "PESERTA: " + user.email.toUpperCase();
+        
+        const nama = user.email.split('@')[0].toUpperCase();
+        document.getElementById('user-display').innerText = `PESERTA: ${nama}`;
 
+        // Anti-Joki (Refresh Friendly)
         const mySess = localStorage.getItem("sesi_aktif");
         onValue(ref(db, 'active_sessions/' + user.uid), (snap) => {
-            const data = snap.val();
-            if (data && data.id_sesi !== mySess) {
-                alert("Login terdeteksi di perangkat lain!");
+            if (snap.val() && snap.val().id_sesi !== mySess) {
+                alert("Sesi login ganda terdeteksi!");
                 signOut(auth).then(() => { localStorage.clear(); window.location.href = "index.html"; });
             }
         });
 
-        // Auto-Recovery Progres
-        const savedKeys = localStorage.getItem("rec_keys");
-        const savedCol = localStorage.getItem("rec_col");
-        const savedStats = localStorage.getItem("rec_stats");
-        if(savedKeys && savedCol && savedStats) {
-            allKeys = JSON.parse(savedKeys);
-            currentColumn = parseInt(savedCol);
-            stats = JSON.parse(savedStats);
-            tampilkanLayar('screen-game');
-            jalankanGame();
+        // Cek data lama (jika refresh)
+        if(localStorage.getItem("rec_keys")) {
+            allKeys = JSON.parse(localStorage.getItem("rec_keys"));
+            currentCol = parseInt(localStorage.getItem("rec_col") || 0);
+            stats = JSON.parse(localStorage.getItem("rec_stats") || "[]");
+            pindahScreen('screen-game');
+            jalankan();
         }
     });
 
-    // Inisialisasi Input Default
-    const defaultChar = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
+    // Inisialisasi Input
+    const defaults = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
     for(let i=0; i<10; i++) {
-        document.getElementById('input-fields').innerHTML += `<div class="input-group"><label>K${i+1}</label><input type="text" id="in-${i}" maxlength="5" placeholder="${defaultChar[i]}"></div>`;
+        document.getElementById('input-fields').innerHTML += `<div class="input-group"><b>K${i+1}</b><input type="text" id="in-${i}" maxlength="5" placeholder="${defaults[i]}"></div>`;
     }
 
-    // --- FUNGSI UTAMA (Dibuat Window agar bisa diakses Console/Tombol) ---
-    window.mulaiUjianBaru = () => {
+    window.mulai = () => {
         allKeys = [];
         for(let i=0; i<10; i++) {
-            let val = document.getElementById(`in-${i}`).value.toUpperCase() || defaultChar[i];
+            let val = document.getElementById(`in-${i}`).value.toUpperCase() || defaults[i];
             allKeys.push(val.split(''));
         }
         localStorage.setItem("rec_keys", JSON.stringify(allKeys));
-        tampilkanLayar('screen-game');
-        jalankanGame();
+        pindahScreen('screen-game');
+        jalankan();
     };
 
-    function jalankanGame() {
+    function jalankan() {
         b = 0; s = 0;
         document.getElementById('live-b').innerText = 0;
         document.getElementById('live-s').innerText = 0;
-        document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
+        document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
         
-        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = allKeys[currentColumn][i];
+        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = allKeys[currentCol][i];
         
-        localStorage.setItem("rec_col", currentColumn);
+        localStorage.setItem("rec_col", currentCol);
         localStorage.setItem("rec_stats", JSON.stringify(stats));
 
-        buatSoalAcak();
-        mulaiTimerMundur();
+        buatSoal();
+        mulaiTimer();
     }
 
-    function buatSoalAcak() {
+    function buatSoal() {
         correctIdx = Math.floor(Math.random() * 5);
-        let q = allKeys[currentColumn].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
+        let q = allKeys[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
         document.getElementById('question').innerText = q.join('');
     }
 
-    window.jawabSoal = (idx) => {
+    window.jawab = (idx) => {
         if(idx === correctIdx) b++; else s++;
         document.getElementById('live-b').innerText = b;
         document.getElementById('live-s').innerText = s;
-        buatSoalAcak();
+        buatSoal();
     };
 
-    function mulaiTimerMundur() {
+    function mulaiTimer() {
         let t = 60;
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
@@ -177,73 +204,37 @@
             t--; document.getElementById('timer').innerText = t;
             if(t <= 0) {
                 clearInterval(timerId);
-                stats.push({ col: currentColumn+1, b: b, s: s, total: b+s });
-                currentColumn++;
-                if(currentColumn < 10) { alert("Lanjut Kolom Berikutnya!"); jalankanGame(); }
-                else { selesaiSimulasi(); }
+                stats.push({ col: currentCol+1, b: b, s: s, total: b+s });
+                currentCol++;
+                if(currentCol < 10) { alert("Selesai! Lanjut Kolom Berikutnya."); jalankan(); }
+                else { selesai(); }
             }
         }, 1000);
     }
 
-    function selesaiSimulasi() {
+    function selesai() {
         localStorage.removeItem("rec_col"); localStorage.removeItem("rec_stats"); localStorage.removeItem("rec_keys");
-        tampilkanLayar('screen-result');
-        
-        const bList = stats.map(d => d.b);
-        const totalB = bList.reduce((x, y) => x + y, 0);
-        const totalT = stats.reduce((x, y) => x + y.total, 0);
+        pindahScreen('screen-result');
 
-        // Rumus Skor
-        let panker = totalT / 10;
-        let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
+        const bList = stats.map(d => d.b);
+        const totB = bList.reduce((a,x) => a+x, 0);
+        const totT = stats.reduce((a,x) => a+x.total, 0);
+
+        // HITUNG 4 ASPEK
+        let panker = totT / 10;
+        let tianker = totT > 0 ? (totB / totT) * 100 : 0;
         let janker = Math.max(0, 100 - ((Math.max(...bList) - Math.min(...bList)) * 4));
         let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
-        let skorFinal = (Math.min(panker*1.8, 100)*0.3) + (tianker*0.4) + (janker*0.15) + (Math.min(hanker*1.8, 100)*0.15);
+        let final = (Math.min(panker*1.8, 100)*0.3) + (tianker*0.4) + (janker*0.15) + (Math.min(hanker*1.8, 100)*0.15);
 
-        document.getElementById('res-total').innerText = skorFinal.toFixed(1);
+        document.getElementById('res-total').innerText = final.toFixed(1);
+        document.getElementById('aspek-list').innerHTML = `
+            <div class="aspek-card">Kecepatan: <b>${panker.toFixed(1)}</b></div>
+            <div class="aspek-card">Ketelitian: <b>${tianker.toFixed(1)}%</b></div>
+            <div class="aspek-card">Kestabilan: <b>${janker.toFixed(1)}</b></div>
+            <div class="aspek-card">Ketahanan: <b>${hanker.toFixed(1)}</b></div>
+        `;
 
-        // Save to Firebase
-        const user = auth.currentUser;
-        if(user) {
-            push(ref(db, 'rekap_skor'), { email: user.email, skor: skorFinal.toFixed(1), waktu: new Date().toLocaleString() });
-        }
-
-        let h = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th><th>Total</th></tr>`;
-        stats.forEach(d => { h += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; });
-        document.getElementById('res-table').innerHTML = h + `</table>`;
-
-        new Chart(document.getElementById('myChart'), {
-            type: 'line',
-            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension: 0.1 }] }
-        });
-    }
-
-    // --- PINTU BELAKANG (SKIP CONSOLE) ---
-    window.skip = () => {
-        clearInterval(timerId);
-        stats.push({ col: currentColumn+1, b: 25, s: 0, total: 25 });
-        currentColumn++;
-        if(currentColumn < 10) { jalankanGame(); } else { selesaiSimulasi(); }
-        console.log("Kolom diskip berhasil!");
-    };
-
-    window.finishCepat = () => {
-        clearInterval(timerId);
-        for(let i=stats.length; i<10; i++) stats.push({ col: i+1, b: 20, s: 2, total: 22 });
-        selesaiSimulasi();
-    };
-
-    window.resetUjian = () => { localStorage.clear(); location.reload(); };
-
-    function tampilkanLayar(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
-    window.addEventListener('keydown', (e) => {
-        const m = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
-        if(m[e.key.toLowerCase()] !== undefined) window.jawabSoal(m[e.key.toLowerCase()]);
-    });
-</script>
-</body>
-</html>
+        // DASHBOARD REKAP 1-10 (HORIZONTAL)
+        let tr1 = "<tr><th>KOLOM</th>", tr2 = "<tr><th>BENAR</th>";
+        stats.forEach(d => { tr1 += `<td>${d.col}</td>`; tr2 += `<td>${d.b}</td>`; });
