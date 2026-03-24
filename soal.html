@@ -3,56 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Kecermatan - KurniaCandra</title>
+    <title>CAT Kecermatan - Official System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 20px; display: flex; justify-content: center; user-select: none; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 15px; display: flex; justify-content: center; user-select: none; }
         .container { background: white; width: 100%; max-width: 850px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 4px solid var(--accent); }
-        .header h1 { margin: 0; font-size: 1.4rem; }
         .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
         .active { display: block; }
         .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-        .input-group label { width: 70px; font-weight: bold; font-size: 0.85rem; color: #555; }
-        input[type="text"] { flex: 1; padding: 8px; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
-        .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
-        .timer-box { font-size: 2.2rem; font-weight: 800; color: var(--danger); }
+        .input-group label { width: 50px; font-weight: bold; font-size: 0.8rem; }
+        input[type="text"] { flex: 1; padding: 8px; border: none; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; }
+        .timer-box { font-size: 2.5rem; font-weight: 900; color: var(--danger); }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
-        .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
-        .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
-        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; }
+        .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; background: #fff; }
+        .key-head { background: #333; color: white; padding: 5px; font-weight: bold; }
+        .key-val { font-size: 2rem; padding: 10px; font-weight: bold; }
+        #question { font-size: 5rem; font-weight: 900; letter-spacing: 20px; margin: 40px 0; color: #000; }
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-ans { padding: 20px; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-ans:active { transform: scale(0.95); background: var(--accent); }
-        .total-score-box { background: var(--primary); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .total-score-box div { font-size: 2.5rem; font-weight: 900; color: var(--accent); }
-        .aspek-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
-        .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); text-align: left; }
-        .kat-text { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
+        .total-score-box { background: var(--primary); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .total-score-box div { font-size: 3rem; font-weight: 900; color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .credit-footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 0.8rem; color: #666; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div class="container">
-    <div class="header"><h1>TES KECERMATAN POLRI - SIMULASI CAT</h1></div>
+    <div class="header"><h1 id="user-display">SIMULASI KECERMATAN POLRI</h1></div>
 
     <div id="screen-setup" class="screen active">
         <h3>Input Karakter 10 Kolom</h3>
+        <p style="font-size: 0.8rem; color: #666;">Silakan isi kolom atau gunakan default</p>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 250px; font-size: 1.1rem;" onclick="validateAndStart()">START SIMULASI</button>
+        <button class="btn-ans" style="background: var(--success); width: 280px; font-size: 1.2rem;" onclick="validateAndStart()">MULAI UJIAN SEKARANG</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="stats-top">
-            <div style="text-align: left;"><span id="col-info" style="font-weight: bold; font-size: 1.2rem;">KOLOM 1</span></div>
+            <div id="col-info" style="font-weight: bold; font-size: 1.3rem;">KOLOM 1</div>
             <div class="timer-box" id="timer">60</div>
-            <div>B: <span id="live-b" style="color:var(--success); font-weight:bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight:bold;">0</span></div>
+            <div>B: <span id="live-b" style="color:var(--success)">0</span> | S: <span id="live-s" style="color:var(--danger)">0</span></div>
         </div>
         <div class="key-row">
             <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
@@ -73,29 +70,21 @@
 
     <div id="screen-result" class="screen">
         <div class="total-score-box">
-            <h2 style="font-size: 0.9rem; margin:0; opacity:0.8;">NILAI AKHIR KECERMATAN</h2>
+            <h2 style="margin:0; font-size: 1rem;">NILAI AKUSTIK AKHIR</h2>
             <div id="res-total">0</div>
-        </div>
-        <div class="aspek-container">
-            <div class="aspek-card"><h4>Kecepatan</h4><div id="res-panker">0</div><span id="kat-panker"></span></div>
-            <div class="aspek-card"><h4>Ketelitian</h4><div id="res-tianker">0</div><span id="kat-tianker"></span></div>
-            <div class="aspek-card"><h4>Keajegan</h4><div id="res-janker">0</div><span id="kat-janker"></span></div>
-            <div class="aspek-card"><h4>Ketahanan</h4><div id="res-hanker">0</div><span id="kat-hanker"></span></div>
         </div>
         <div id="final-table"></div>
         <div style="height: 250px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="location.reload()">ULANGI TES</button>
+        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1rem;" onclick="resetLengkap()">MULAI BARU</button>
     </div>
 
-    <div class="credit-footer">
-        Aplikasi Simulasi &copy; 2026 | Credit by KurniaCandra
-    </div>
+    <div class="credit-footer">&copy; 2026 CAT System | KurniaCandra Official</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
@@ -110,38 +99,54 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // --- PROTEKSI LOGIN ---
+    // Variabel Game
+    const TOTAL_COL = 10, TIME_LIMIT = 60;
+    let allColumnKeys = [], currentColumn = 0, scoreCorrect = 0, scoreWrong = 0, statsData = [], timerId, currentCorrectIdx = -1;
+
+    // Proteksi Sesi & Identitas
     onAuthStateChanged(auth, (user) => {
         if (!user) {
             window.location.href = "index.html";
         } else {
-            const mySess = localStorage.getItem("sesi_saya");
+            document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
+            
+            // Cek Sesi Ganda
+            const mySess = localStorage.getItem("sesi_aktif");
             onValue(ref(db, 'active_sessions/' + user.uid), (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.id_sesi !== mySess) {
-                    alert("Akun login di HP lain!");
+                    alert("Sesi Berakhir: Akun login di tempat lain!");
                     signOut(auth).then(() => { window.location.href = "index.html"; });
                 }
             });
+
+            // FITUR RECOVERY: Jika refresh, kembalikan ke kolom terakhir
+            const savedCol = localStorage.getItem("current_col_progress");
+            const savedStats = localStorage.getItem("stats_progress");
+            if(savedCol && savedStats) {
+                if(confirm("Lanjutkan simulasi yang tertunda?")) {
+                    currentColumn = parseInt(savedCol);
+                    statsData = JSON.parse(savedStats);
+                    validateAndStart(true);
+                } else {
+                    resetLengkap();
+                }
+            }
         }
     });
 
-    // --- LOGIKA GAME ---
-    const TOTAL_COL = 10, TIME_LIMIT = 60;
-    let allColumnKeys = [], currentColumn = 0, scoreCorrect = 0, scoreWrong = 0, statsData = [], timerId, currentCorrectIdx = -1, myChart;
-
+    // Inisialisasi Input
     const examples = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i < TOTAL_COL; i++) {
         inputArea.innerHTML += `<div class="input-group"><label>K-${i+1}</label><input type="text" id="input-${i}" maxlength="5" placeholder="${examples[i]}"></div>`;
     }
 
-    window.validateAndStart = () => {
+    window.validateAndStart = (isRecovery = false) => {
         allColumnKeys = [];
         for(let i=0; i < TOTAL_COL; i++) {
             let inputEl = document.getElementById(`input-${i}`);
             let val = inputEl.value.replace(/\s/g, '').toUpperCase() || inputEl.getAttribute('placeholder');
-            if(val.length !== 5) return alert(`Lengkapi Kolom ${i+1}!`);
             allColumnKeys.push(val.split(''));
         }
         showScreen('screen-game');
@@ -153,9 +158,16 @@
         document.getElementById('live-b').innerText = 0;
         document.getElementById('live-s').innerText = 0;
         document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
+        
         let keys = allColumnKeys[currentColumn];
         for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = keys[i];
-        newQuestion(); startTimer();
+        
+        // Simpan progres ke LocalStorage agar kalau refresh tidak hilang
+        localStorage.setItem("current_col_progress", currentColumn);
+        localStorage.setItem("stats_progress", JSON.stringify(statsData));
+
+        newQuestion(); 
+        startTimer();
     }
 
     function newQuestion() {
@@ -183,7 +195,7 @@
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
                 if(currentColumn < TOTAL_COL) {
-                    alert("Lanjut Kolom " + (currentColumn + 1));
+                    alert("Kolom " + currentColumn + " Selesai. Lanjut?");
                     runColumn();
                 } else {
                     finish();
@@ -193,11 +205,16 @@
     }
 
     function finish() {
+        // Bersihkan progres karena sudah selesai
+        localStorage.removeItem("current_col_progress");
+        localStorage.removeItem("stats_progress");
+
         showScreen('screen-result');
         const bList = statsData.map(d => d.b);
         const totalB = bList.reduce((a, b) => a + b, 0);
         const totalT = statsData.reduce((a, b) => a + b.total, 0);
 
+        // Hitung Skor (Rumus Akustik)
         let panker = totalT / TOTAL_COL;
         let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
         let deviasi = Math.max(...bList) - Math.min(...bList);
@@ -206,34 +223,39 @@
         let nAkustik = (Math.min(panker*1.8, 100) * 0.3) + (tianker * 0.4) + (janker * 0.15) + (Math.min(hanker*1.8, 100) * 0.15);
 
         document.getElementById('res-total').innerText = nAkustik.toFixed(1);
-        document.getElementById('res-panker').innerText = panker.toFixed(1);
-        document.getElementById('res-tianker').innerText = tianker.toFixed(1) + "%";
-        document.getElementById('res-janker').innerText = janker.toFixed(0);
-        document.getElementById('res-hanker').innerText = hanker.toFixed(0);
 
-        // Kirim hasil ke Firebase
+        // SIMPAN KE FIREBASE (LOG RIWAYAT)
         const user = auth.currentUser;
         if(user) {
+            const now = new Date();
             push(ref(db, 'rekap_skor'), {
                 email: user.email,
                 skor: nAkustik.toFixed(1),
-                waktu: new Date().toLocaleString()
+                tanggal: now.toLocaleDateString('id-ID'),
+                jam: now.toLocaleTimeString('id-ID'),
+                timestamp: Date.now()
             });
         }
 
-        let html = `<table><tr><th>Kolom</th><th>B</th><th>S</th><th>Total</th></tr>`;
-        statsData.forEach(d => { html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; });
+        let html = `<table><tr><th>Kolom</th><th>B</th><th>S</th></tr>`;
+        statsData.forEach(d => { html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td></tr>`; });
         document.getElementById('final-table').innerHTML = html + `</table>`;
 
         new Chart(document.getElementById('myChart'), {
             type: 'line',
             data: {
                 labels: statsData.map(d => "K" + d.col),
-                datasets: [{ label: 'Benar', data: bList, borderColor: '#27ae60', tension: 0.1 }]
+                datasets: [{ label: 'Benar', data: bList, borderColor: '#27ae60', fill: false }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
+
+    window.resetLengkap = () => {
+        localStorage.removeItem("current_col_progress");
+        localStorage.removeItem("stats_progress");
+        location.reload();
+    };
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
