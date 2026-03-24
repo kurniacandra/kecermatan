@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
     <script>
-        // Proteksi: Cek apakah user sudah login melalui index.html
         if (sessionStorage.getItem("statusLogin") !== "aktif") {
             alert("Akses ditolak! Silakan login terlebih dahulu.");
             window.location.href = "index.html";
@@ -14,55 +13,68 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; width: 100%; max-width: 850px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 850px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; min-height: 90vh; }
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 4px solid var(--accent); }
-        .header h1 { margin: 0; font-size: 1.4rem; }
-        .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
+        .header h1 { margin: 0; font-size: 1.2rem; }
+        .screen { display: none; padding: 20px; text-align: center; flex-grow: 1; }
         .active { display: block; }
+
+        /* Setup Grid */
         .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-        .input-group label { width: 70px; font-weight: bold; font-size: 0.85rem; color: #555; }
-        input[type="text"] { flex: 1; padding: 8px; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
-        .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
-        .timer-box { font-size: 2.2rem; font-weight: 800; color: var(--danger); }
+        .input-group label { width: 50px; font-weight: bold; font-size: 0.8rem; }
+        input[type="text"] { flex: 1; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Game Stats */
+        .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #eee; padding: 12px; border-radius: 8px; }
+        .timer-box { font-size: 2.5rem; font-weight: 800; color: var(--danger); }
+        
+        /* Kotak Kunci */
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
         .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
         .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
         .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
-        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; user-select: none; }
+
+        /* Soal */
+        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 20px; margin: 35px 0; color: #000; user-select: none; }
+        
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .total-score-badge { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: inline-block; min-width: 200px; }
-        .total-score-badge div { font-size: 3.5rem; font-weight: 900; color: var(--accent); }
-        .aspek-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-        .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); }
-        .aspek-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
-        .aspek-card div { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f2f2f2; }
+
+        /* Result Area */
+        .res-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .res-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); text-align: left; }
+        .res-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+        .res-card .score-val { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: block; margin: 5px 0; }
+        .kat-badge { font-size: 0.75rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; color: white; }
         
-        /* Gaya Khusus Credit */
-        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
-        .ig-link { color: var(--primary); font-weight: bold; text-decoration: none; }
-        .ig-link:hover { color: var(--accent); }
+        /* Warna Kategori */
+        .bg-s-tinggi { background: #1b5e20; }
+        .bg-tinggi { background: #2e7d32; }
+        .bg-cukup { background: #f9a825; }
+        .bg-rendah { background: #d32f2f; }
+        .bg-s-rendah { background: #b71c1c; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .credit-footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; margin-top: auto; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h1>TES KECERMATAN POLRI - SIMULASI CAT</h1></div>
+    <div class="header"><h1>SIMULASI PSIKOTES KECERMATAN</h1></div>
 
     <div id="screen-setup" class="screen active">
-        <h3>Input Karakter 10 Kolom</h3>
+        <h3>Input 10 Kolom (Karakter Unik)</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 250px; font-size: 1.1rem;" onclick="validateAndStart()">START SIMULASI</button>
+        <button class="btn-ans" style="background: var(--success); font-size: 1.1rem;" onclick="validateAndStart()">START SIMULASI</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="stats-top">
-            <div style="text-align: left;"><span id="col-info" style="font-weight: bold; font-size: 1.2rem;">KOLOM 1</span></div>
+            <div id="col-info" style="font-weight: bold; font-size: 1.2rem;">KOLOM 1</div>
             <div class="timer-box" id="timer">60</div>
             <div>B: <span id="live-b" style="color:var(--success); font-weight:bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight:bold;">0</span></div>
         </div>
@@ -84,28 +96,41 @@
     </div>
 
     <div id="screen-result" class="screen">
-        <div class="total-score-badge">
-            <h2 style="margin:0; font-size:0.9rem; opacity:0.8;">Nilai Akhir Kecermatan</h2>
-            <div id="res-total">0</div>
+        <h2 style="margin:0">Hasil Evaluasi Kerja</h2>
+        <div class="res-grid">
+            <div class="res-card">
+                <h4>Kecepatan Kerja (Panker)</h4>
+                <span class="score-val" id="res-panker">0</span>
+                <div id="kat-panker"></div>
+            </div>
+            <div class="res-card">
+                <h4>Ketelitian Kerja (Tianker)</h4>
+                <span class="score-val" id="res-tianker">0</span>
+                <div id="kat-tianker"></div>
+            </div>
+            <div class="res-card">
+                <h4>Keajegan Kerja (Janker)</h4>
+                <span class="score-val" id="res-janker">0</span>
+                <div id="kat-janker"></div>
+            </div>
+            <div class="res-card">
+                <h4>Ketahanan Kerja (Hanker)</h4>
+                <span class="score-val" id="res-hanker">0</span>
+                <div id="kat-hanker"></div>
+            </div>
         </div>
-        <div class="aspek-container">
-            <div class="aspek-card"><h4>Kecepatan</h4><div id="res-kecepatan">0</div></div>
-            <div class="aspek-card"><h4>Ketepatan</h4><div id="res-ketepatan">0</div></div>
-            <div class="aspek-card"><h4>Ketahanan</h4><div id="res-ketahanan">0</div></div>
-        </div>
+        <div style="height: 250px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
         <div id="final-table"></div>
-        <div style="height: 300px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="resetTest()">ULANGI TES</button>
+        <button class="btn-ans" style="background:var(--success); margin:20px 0; font-size:1.1rem;" onclick="resetTest()">ULANGI TES</button>
     </div>
 
     <div class="credit-footer">
-        Aplikasi Simulasi &copy; 2026 | 
-        <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" class="ig-link">Credit by KurniaCandra</a>
+        Aplikasi Simulasi &copy; 2026 | <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" style="color: var(--primary); font-weight:bold; text-decoration:none;">By KurniaCandra</a>
     </div>
 </div>
 
 <script>
-    const TOTAL_COL = 10, TIME_LIMIT = 60; 
+    const TOTAL_COL = 10, TIME_LIMIT = 60;
     let allColumnKeys = [], currentColumn = 0, scoreCorrect = 0, scoreWrong = 0, statsData = [], timerId, currentCorrectIdx = -1, myChart;
 
     const examples = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
@@ -114,12 +139,36 @@
         inputArea.innerHTML += `<div class="input-group"><label>K-${i+1}</label><input type="text" id="input-${i}" maxlength="5" placeholder="${examples[i]}"></div>`;
     }
 
+    function getKategori(nilai, tipe) {
+        let label = "", cls = "";
+        // Thresholds (Batas nilai) disesuaikan dengan standar umum CAT Psikotes
+        const ranges = {
+            panker: [25, 35, 45, 55], // Rata-rata jawaban
+            tianker: [75, 85, 92, 97], // Persentase benar
+            janker: [40, 60, 80, 90], // Stabilitas
+            hanker: [40, 60, 80, 90]  // Performa kolom akhir
+        };
+        const r = ranges[tipe];
+        if (nilai >= r[3]) { label = "Sangat Tinggi"; cls = "bg-s-tinggi"; }
+        else if (nilai >= r[2]) { label = "Tinggi"; cls = "bg-tinggi"; }
+        else if (nilai >= r[1]) { label = "Cukup"; cls = "bg-cukup"; }
+        else if (nilai >= r[0]) { label = "Rendah"; cls = "bg-rendah"; }
+        else { label = "Sangat Rendah"; cls = "bg-s-rendah"; }
+        return `<span class="kat-badge ${cls}">${label}</span>`;
+    }
+
     function validateAndStart() {
         allColumnKeys = [];
         for(let i=0; i < TOTAL_COL; i++) {
             let inputEl = document.getElementById(`input-${i}`);
             let val = inputEl.value.replace(/\s/g, '').toUpperCase() || inputEl.getAttribute('placeholder');
-            if(val.length !== 5) return alert(`Lengkapi Kolom ${i+1}!`);
+            
+            if(val.length !== 5) return alert(`Kolom ${i+1} harus berisi 5 karakter!`);
+            
+            // Cek Huruf Duplikat
+            let unique = new Set(val);
+            if(unique.size !== 5) return alert(`Kolom ${i+1} mengandung huruf/angka yang sama. Masukkan 5 karakter yang berbeda!`);
+            
             allColumnKeys.push(val.split(''));
         }
         showScreen('screen-game');
@@ -128,7 +177,7 @@
 
     function runColumn() {
         scoreCorrect = 0; scoreWrong = 0;
-        document.getElementById('live-b').innerText = 0; 
+        document.getElementById('live-b').innerText = 0;
         document.getElementById('live-s').innerText = 0;
         document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
         let keys = allColumnKeys[currentColumn];
@@ -139,8 +188,7 @@
     function newQuestion() {
         currentCorrectIdx = Math.floor(Math.random() * 5);
         let keys = allColumnKeys[currentColumn];
-        let q = keys.filter((_, idx) => idx !== currentCorrectIdx);
-        q.sort(() => 0.5 - Math.random());
+        let q = keys.filter((_, idx) => idx !== currentCorrectIdx).sort(() => 0.5 - Math.random());
         document.getElementById('question').innerText = q.join('');
     }
 
@@ -161,61 +209,54 @@
                 clearInterval(timerId);
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
-                if(currentColumn < TOTAL_COL) { 
-                    alert(`Kolom ${currentColumn} Selesai!`); 
-                    runColumn(); 
-                } else { 
-                    finish(); 
-                }
+                if(currentColumn < TOTAL_COL) runColumn(); else finish();
             }
         }, 1000);
     }
 
     function finish() {
         showScreen('screen-result');
-        const totalB = statsData.reduce((a, b) => a + b.b, 0);
+        const bList = statsData.map(d => d.b);
+        const totalB = bList.reduce((a, b) => a + b, 0);
         const totalT = statsData.reduce((a, b) => a + b.total, 0);
-        
-        let avgKecepatan = totalT / TOTAL_COL;
-        let skorKecepatan = avgKecepatan > 100 ? 100 : avgKecepatan;
-        let persentaseKetepatan = totalT > 0 ? (totalB / totalT) * 100 : 0;
-        const benarSaja = statsData.map(d => d.b);
-        const deviasi = Math.max(...benarSaja) - Math.min(...benarSaja);
-        let ketahananVal = Math.max(0, 100 - (deviasi * 2)); 
 
-        let nilaiAkhir = ((skorKecepatan * 0.3) + (persentaseKetepatan * 0.5) + (ketahananVal * 0.2)).toFixed(1);
+        // 1. Panker (Kecepatan)
+        let panker = totalT / TOTAL_COL;
+        document.getElementById('res-panker').innerText = panker.toFixed(1);
+        document.getElementById('kat-panker').innerHTML = getKategori(panker, 'panker');
 
-        document.getElementById('res-total').innerText = nilaiAkhir;
-        document.getElementById('res-kecepatan').innerText = avgKecepatan.toFixed(1);
-        document.getElementById('res-ketepatan').innerText = persentaseKetepatan.toFixed(1) + "%";
-        document.getElementById('res-ketahanan').innerText = ketahananVal.toFixed(1) + "%";
+        // 2. Tianker (Ketelitian)
+        let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
+        document.getElementById('res-tianker').innerText = tianker.toFixed(1) + "%";
+        document.getElementById('kat-tianker').innerHTML = getKategori(tianker, 'tianker');
 
-        let html = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th><th>Total</th></tr>`;
-        statsData.forEach(d => { 
-            html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; 
-        });
-        html += `</table>`;
-        document.getElementById('final-table').innerHTML = html;
+        // 3. Janker (Keajegan/Stabilitas)
+        let deviasi = Math.max(...bList) - Math.min(...bList);
+        let janker = Math.max(0, 100 - (deviasi * 4)); 
+        document.getElementById('res-janker').innerText = janker.toFixed(0);
+        document.getElementById('kat-janker').innerHTML = getKategori(janker, 'janker');
+
+        // 4. Hanker (Ketahanan - Rata-rata 3 kolom terakhir)
+        let hankerVal = (bList[7] + bList[8] + bList[9]) / 3 * 2; // Simulasi pembobotan
+        document.getElementById('res-hanker').innerText = hankerVal.toFixed(0);
+        document.getElementById('kat-hanker').innerHTML = getKategori(hankerVal, 'hanker');
+
+        let html = `<table><tr><th>KOLOM</th><th>BENAR</th><th>SALAH</th><th>TOTAL</th></tr>`;
+        statsData.forEach(d => html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`);
+        document.getElementById('final-table').innerHTML = html + `</table>`;
 
         if (myChart) myChart.destroy();
         myChart = new Chart(document.getElementById('myChart'), {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: statsData.map(d => "K" + d.col),
-                datasets: [
-                    { label: 'Benar', data: statsData.map(d => d.b), backgroundColor: '#27ae60' },
-                    { label: 'Salah', data: statsData.map(d => d.s), backgroundColor: '#e74c3c' }
-                ]
+                labels: statsData.map(d => d.col),
+                datasets: [{ label: 'Benar', data: bList, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', fill: true, tension: 0.3 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { maintainAspectRatio: false }
         });
     }
 
-    function resetTest() {
-        currentColumn = 0; statsData = [];
-        showScreen('screen-setup');
-    }
-
+    function resetTest() { currentColumn = 0; statsData = []; showScreen('screen-setup'); }
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
