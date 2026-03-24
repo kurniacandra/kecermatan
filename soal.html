@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v16.0 - Stabil</title>
+    <title>CAT KECERMATAN v16.0 - Stabil & Lengkap</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -16,21 +16,26 @@
         /* SETUP INPUT */
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
         .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; }
-        input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; outline: none; background: transparent; text-transform: uppercase; letter-spacing: 2px; }
+        .input-group b { display: block; margin-bottom: 5px; color: var(--primary); }
+        input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; outline: none; background: transparent; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #eee; }
 
         /* GAMEPLAY */
         .stats-bar { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
         .timer { font-size: 3rem; font-weight: 800; color: var(--danger); }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
         .key-box { border: 2px solid #2c3e50; border-radius: 8px; background: #fff; overflow: hidden; }
-        .key-h { background: #2c3e50; color: white; padding: 3px; font-size: 0.8rem; }
-        .key-v { font-size: 2.2rem; padding: 5px; font-weight: 900; }
+        .key-h { background: #2c3e50; color: white; padding: 3px; font-size: 0.8rem; font-weight: bold; }
+        .key-v { font-size: 2.2rem; padding: 5px; font-weight: 900; color: #1a252f; }
         #question { font-size: 5rem; font-weight: 900; letter-spacing: 15px; margin: 25px 0; color: #1a252f; min-height: 120px; text-transform: uppercase; }
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-ans:active { transform: scale(0.95); background: var(--accent); }
         
         /* RESULTS */
         .final-score-box { background: var(--primary); color: var(--accent); padding: 20px; border-radius: 15px; margin: 15px 0; }
+        .aspek-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; color: white; font-size: 0.9rem; }
+        
+        /* OVERLAYS */
         .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         #lock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; text-align: center; }
     </style>
@@ -38,9 +43,9 @@
 <body oncontextmenu="return false;">
 
 <div id="lock-overlay">
-    <h1 style="font-size: 3rem; color:var(--danger);">⚠️ SESI BERAKHIR ⚠️</h1>
-    <p>Akun login di perangkat lain. Sesi ini ditutup.</p>
-    <button class="btn-ans" style="background:var(--accent); width:200px; margin-top:20px;" onclick="window.location.href='index.html'">LOGIN LAGI</button>
+    <h1 style="font-size: 3rem; color:var(--danger); margin:0;">⚠️ SESI BERAKHIR ⚠️</h1>
+    <p style="font-size: 1.2rem;">Akun login di perangkat lain. Sesi ini telah ditutup.</p>
+    <button class="btn-ans" style="background:var(--accent); width:250px; margin-top:20px; font-size: 1.2rem;" onclick="window.location.href='index.html'">KEMBALI KE LOGIN</button>
 </div>
 
 <div class="container">
@@ -49,15 +54,16 @@
     </div>
 
     <div id="screen-setup" class="screen active">
+        <h3 style="margin-top:0;">PENGATURAN SIMBOL PER KOLOM</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button onclick="window.mulai()" style="width:100%; background:var(--success); color:white; border:none; border-radius:8px; padding:15px; font-weight:bold; cursor:pointer; font-size:1.1rem;">MULAI UJIAN</button>
+        <button onclick="window.mulai()" style="width:100%; background:var(--success); color:white; border:none; border-radius:8px; padding:18px; font-weight:bold; cursor:pointer; font-size:1.2rem; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);">MULAI UJIAN SEKARANG</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="stats-bar">
-            <div id="col-title" style="font-weight: 900;">KOLOM 1</div>
+            <div id="col-title" style="font-weight: 900; color: var(--primary); font-size: 1.2rem;">KOLOM 1</div>
             <div class="timer" id="timer">15</div>
-            <div><b style="color:var(--success)">B: <span id="live-b">0</span></b> | <b style="color:var(--danger)">S: <span id="live-s">0</span></b></div>
+            <div style="font-size: 1.1rem;"><b style="color:var(--success)">B: <span id="live-b">0</span></b> | <b style="color:var(--danger)">S: <span id="live-s">0</span></b></div>
         </div>
         <div class="key-row" id="key-container"></div>
         <div id="question">----</div>
@@ -71,26 +77,28 @@
     </div>
 
     <div id="screen-result" class="screen">
+        <h2 style="margin:0;">HASIL SIMULASI</h2>
         <div class="final-score-box">
-            <h1 style="font-size: 4rem; margin:0;" id="res-total">0</h1>
-            <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
+            <p style="margin:0; font-weight:bold; color:white;">RATA-RATA BENAR</p>
+            <h1 style="font-size: 4.5rem; margin:5px 0;" id="res-total">0</h1>
+            <div id="aspek-list" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin-top:15px;"></div>
         </div>
-        <div style="height: 250px; margin: 20px 0;"><canvas id="glowLineChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px;" onclick="location.reload()">ULANGI</button>
+        <div style="height: 280px; margin: 20px 0;"><canvas id="glowLineChart"></canvas></div>
+        <button class="btn-ans" style="background:var(--success); font-size:1.1rem; width:220px;" onclick="location.reload()">COBA LAGI</button>
     </div>
 </div>
 
 <div id="popup-jeda" class="overlay-jeda">
-    <div style="background:white; padding:40px; border-radius:20px; text-align:center;">
-        <h2>KOLOM SELESAI</h2>
-        <div id="jeda-countdown" style="font-size: 5rem; font-weight: 900; color: var(--danger);">3</div>
+    <div style="background:white; padding:50px; border-radius:25px; text-align:center; box-shadow: 0 0 50px rgba(0,0,0,0.5);">
+        <h2 style="margin-top:0; color:var(--primary);">SIAP-SIAP KOLOM BERIKUTNYA</h2>
+        <div id="jeda-countdown" style="font-size: 6rem; font-weight: 900; color: var(--danger); line-height:1;">3</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", 
@@ -106,38 +114,34 @@
     const db = getDatabase(app);
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
-    
-    // Ambil ID Sesi yang dibuat saat login di index.html
-    const myId = localStorage.getItem('my_session');
+    const mySessId = localStorage.getItem('my_session');
 
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
 
-        const sRef = ref(db, 'user_sessions/' + user.uid);
-        
-        // Pantau Database: Jika ada ID baru, usir user lama
-        onValue(sRef, (snap) => {
+        // Fitur "Kepental"
+        onValue(ref(db, 'user_sessions/' + user.uid), (snap) => {
             const data = snap.val();
-            if (data && data.sessionId && data.sessionId !== myId) {
+            if (data && data.sessionId && data.sessionId !== mySessId) {
                 document.getElementById('lock-overlay').style.display = 'flex';
                 signOut(auth);
             }
         });
     });
 
-    // Generator Input Kolom
+    // Create 10 input fields
+    const inputContainer = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
-        const div = document.createElement('div');
-        div.className = 'input-group';
-        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" value="ABCDE">`;
-        document.getElementById('input-fields').appendChild(div);
+        inputContainer.innerHTML += `<div class="input-group"><b>K${i+1}</b><input type="text" id="in-${i}" maxlength="5" value="ABCDE"></div>`;
     }
 
     window.mulai = () => {
         allKeys = []; 
         for(let i=0; i<10; i++){ 
-            allKeys.push(document.getElementById(`in-${i}`).value.toUpperCase().split('')); 
+            let val = document.getElementById(`in-${i}`).value.toUpperCase().split('');
+            if(val.length < 5) { alert(`Kolom K${i+1} harus 5 karakter!`); return; }
+            allKeys.push(val);
         }
         currentCol = 0; stats = []; showS('screen-game'); run();
     };
@@ -147,6 +151,7 @@
         document.getElementById('live-b').innerText = 0; 
         document.getElementById('live-s').innerText = 0;
         document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
+        
         let h = ""; 
         allKeys[currentCol].forEach((k, i) => {
             h += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v">${k}</div></div>`;
@@ -157,8 +162,11 @@
 
     function makeQ() {
         correctIdx = Math.floor(Math.random() * 5);
-        let q = allKeys[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
-        document.getElementById('question').innerText = q.join('');
+        let currentPool = [...allKeys[currentCol]];
+        let charMissing = currentPool[correctIdx];
+        currentPool.splice(correctIdx, 1);
+        currentPool.sort(() => Math.random() - 0.5);
+        document.getElementById('question').innerText = currentPool.join('');
     }
 
     window.jawab = (idx) => { 
@@ -175,23 +183,27 @@
             t--; document.getElementById('timer').innerText = t;
             if (t <= 0) {
                 clearInterval(timerId);
-                stats.push({ col: currentCol + 1, b: b, s: s });
+                stats.push({ b: b, s: s });
                 currentCol++;
                 if (currentCol < 10) {
-                    const p = document.getElementById('popup-jeda'); 
-                    let sisa = 3;
-                    document.getElementById('jeda-countdown').innerText = sisa;
-                    p.style.display = 'flex';
-                    const ij = setInterval(() => { 
-                        sisa--; 
-                        document.getElementById('jeda-countdown').innerText = sisa; 
-                        if(sisa <= 0){ 
-                            clearInterval(ij); 
-                            p.style.display = 'none'; 
-                            run(); 
-                        }
-                    }, 1000);
+                    jeda();
                 } else { finish(); }
+            }
+        }, 1000);
+    }
+
+    function jeda() {
+        const p = document.getElementById('popup-jeda'); 
+        let sisa = 3;
+        document.getElementById('jeda-countdown').innerText = sisa;
+        p.style.display = 'flex';
+        const ij = setInterval(() => { 
+            sisa--; 
+            document.getElementById('jeda-countdown').innerText = sisa; 
+            if(sisa <= 0){ 
+                clearInterval(ij); 
+                p.style.display = 'none'; 
+                run(); 
             }
         }, 1000);
     }
@@ -199,24 +211,37 @@
     function finish() {
         showS('screen-result');
         const bList = stats.map(d => d.b);
-        const totB = bList.reduce((a,x) => a+x, 0);
-        const final = (totB / 10).toFixed(1);
-        document.getElementById('res-total').innerText = final;
+        const totalBenar = bList.reduce((a,x) => a+x, 0);
+        document.getElementById('res-total').innerText = (totalBenar / 10).toFixed(1);
         
+        // Render Aspek List (Skor per kolom)
+        const asp = document.getElementById('aspek-list');
+        asp.innerHTML = "";
+        stats.forEach((d, i) => {
+            asp.innerHTML += `<div class="aspek-item">K${i+1}: <b>${d.b}</b></div>`;
+        });
+
+        // Render Chart
         new Chart(document.getElementById('glowLineChart'), {
             type: 'line', 
             data: { 
-                labels: stats.map(d => "K"+d.col), 
+                labels: stats.map((_, i) => "K"+(i+1)), 
                 datasets: [{ 
-                    label:'Benar', 
+                    label:'Jumlah Benar', 
                     data: bList, 
                     borderColor:'#27ae60', 
-                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    backgroundColor: 'rgba(39, 174, 96, 0.2)',
                     fill: true,
-                    tension:0.4 
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#fff'
                 }] 
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
         });
     }
 
