@@ -277,19 +277,40 @@ function getStatusPsikologi(nilai) {
     function finish() {
         showS('screen-result');
         saveProgress('finished');
+        
         const bList = stats.map(d => d.b);
         const sList = stats.map(d => d.s);
         const totB = bList.reduce((a,x) => a+x, 0);
         const totS = sList.reduce((a,x) => a+x, 0);
         const totT = totB + totS;
 
+        // --- RUMUS PERHITUNGAN ---
         let panker = totT / 10;
         let tianker = totT > 0 ? (totB / totT) * 100 : 0;
         let janker = 100 - ((Math.max(...bList) - Math.min(...bList)) * 5);
         let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
         let final = (Math.min(panker*2, 100)*0.3) + (tianker*0.4) + (Math.max(0, janker)*0.15) + (Math.min(hanker, 100)*0.15);
 
-        document.getElementById('res-total').innerText = final.toFixed(1);
+        // --- LOGIKA GRADE PSIKOLOGI ---
+        let gradeLabel = "";
+        let gradeColor = "";
+
+        if (final >= 80) { gradeLabel = "SANGAT BAIK (ST)"; gradeColor = "#1b5e20"; }
+        else if (final >= 65) { gradeLabel = "BAIK (T)"; gradeColor = "#2e7d32"; }
+        else if (final >= 50) { gradeLabel = "CUKUP (C)"; gradeColor = "#f9a825"; }
+        else if (final >= 40) { gradeLabel = "KURANG (K)"; gradeColor = "#d32f2f"; }
+        else { gradeLabel = "SANGAT KURANG (SK)"; gradeColor = "#b71c1c"; }
+
+        // --- TAMPILKAN HASIL ---
+        const resTotalEl = document.getElementById('res-total');
+        // Menampilkan Angka dan Label Grade di bawahnya
+        resTotalEl.innerHTML = `
+            <div style="color: ${gradeColor}">${final.toFixed(1)}</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: white; background: ${gradeColor}; padding: 5px 15px; border-radius: 50px; display: inline-block; margin-top: 10px;">
+                ${gradeLabel}
+            </div>
+        `;
+
         document.getElementById('aspek-list').innerHTML = `
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Kecepatan: ${panker.toFixed(1)}</div>
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketelitian: ${tianker.toFixed(1)}%</div>
