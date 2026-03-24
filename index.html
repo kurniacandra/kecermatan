@@ -12,7 +12,7 @@
         p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
         input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
         .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-login:disabled { background: #95a5a6; }
+        .btn-login:hover { background: #2c3e50; }
         .divider { height: 1px; background: #eee; margin: 20px 0; position: relative; }
         .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #999; font-size: 0.8rem; }
         .btn-wa { display: block; text-decoration: none; width: 100%; padding: 12px; background: #25D366; color: white; border-radius: 8px; font-weight: bold; box-sizing: border-box; }
@@ -58,26 +58,25 @@
         btn.innerText = "MEMVALIDASI...";
         btn.disabled = true;
 
+        // Login murni (Pasti berhasil kalau Auth benar)
         signInWithEmailAndPassword(auth, email, pass)
-            .then((userCredential) => {
-                // Buat ID Sesi baru
-                const newSessId = 'sess_' + Math.random().toString(36).substr(2, 9);
+            .then((result) => {
+                // Buat ID sesi baru
+                const sessId = 's_' + Math.random().toString(36).substr(2, 5);
                 
-                // Simpan ke database tanpa 'await' agar tidak stuck jika rules salah
-                set(ref(db, 'user_sessions/' + userCredential.user.uid), {
-                    sessionId: newSessId
-                });
+                // Simpan ke database tanpa ditunggu (agar tidak stuck)
+                set(ref(db, 'user_sessions/' + result.user.uid), { sessionId: sessId });
+                
+                // Simpan di memori HP/Laptop
+                localStorage.setItem('my_session', sessId);
 
-                // Simpan ID sesi di browser lokal agar nanti dicocokkan di soal.html
-                localStorage.setItem('current_session', newSessId);
-
-                // Langsung gas ke halaman soal
+                // Langsung pindah halaman
                 window.location.href = "soal.html";
             })
             .catch((error) => {
                 btn.innerText = "MASUK SISTEM";
                 btn.disabled = false;
-                alert("Login Gagal! Cek Email/Password.");
+                alert("Login Gagal! Akun tidak ditemukan.");
             });
     };
 </script>
