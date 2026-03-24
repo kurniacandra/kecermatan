@@ -3,67 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Masuk Simulasi CAT</title>
+    <title>Sistem CAT - Login</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #fff; }
-        .login-card { background: #16213e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center; border: 1px solid #0f3460; }
-        h2 { margin-bottom: 10px; color: #e94560; }
-        p { font-size: 14px; color: #95a5a6; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; background: #0f3460; color: #fff; font-size: 16px; outline: none; box-sizing: border-box; }
-        input:focus { border: 1px solid #e94560; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #fff; overflow: hidden; }
+        .login-card { background: #16213e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center; border: 1px solid #0f3460; position: relative; }
+        .login-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: #e94560; border-radius: 15px 15px 0 0; }
+        h2 { margin-bottom: 10px; color: #e94560; text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 13px; color: #95a5a6; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; background: #0f3460; color: #fff; font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; }
+        input:focus { box-shadow: 0 0 8px #e94560; }
         button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 15px; }
         button:hover { background: #950740; transform: translateY(-2px); }
-        #error-msg { color: #ff4d4d; font-size: 13px; margin-top: 15px; min-height: 18px; }
+        #error-msg { color: #ff4d4d; font-size: 12px; margin-top: 15px; min-height: 18px; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <div class="login-card">
     <h2>Sistem CAT</h2>
-    <p>Silakan login dengan akun peserta</p>
+    <p>Portal Simulasi Kecermatan Polri</p>
     
-    <input type="text" id="username" placeholder="Username" autocomplete="off">
-    <input type="password" id="password" placeholder="Password">
+    <input type="text" id="_0x1f2a" placeholder="Username" autocomplete="off">
+    <input type="password" id="_0x3e4b" placeholder="Password">
     
-    <button onclick="cekLogin()">MULAI UJIAN</button>
+    <button id="_0x9a8c">MULAI UJIAN</button>
     
     <div id="error-msg"></div>
 </div>
 
 <script>
-    // DAFTAR AKUN PESERTA (Tambahkan di sini)
-    // Format: { u: "username", p: "password" }
-    const daftarPeserta = [
-        { u: "peserta01", p: "akpol2026" },
-        { u: "peserta02", p: "semangat26" },
-        { u: "admin", p: "rahasia123" },
-        { u: "ananta", p: "rahasia" }//
+  
+    const _0xdb = [
+        { u: "ananta", p: "bWFrYW4=" },
+        { u: "admin", p: "cmFoYXNpYTEyMw==" }
     ];
 
-    function cekLogin() {
-        const userIn = document.getElementById("username").value;
-        const passIn = document.getElementById("password").value;
-        const error = document.getElementById("error-msg");
+    const btn = document.getElementById("_0x9a8c");
+    const msg = document.getElementById("error-msg");
 
-        // Cari kecocokan data
-        const loginBerhasil = daftarPeserta.find(akun => akun.u === userIn && akun.p === passIn);
+    function _0xlogin() {
+        const _u = document.getElementById("_0x1f2a").value;
+        const _p = document.getElementById("_0x3e4b").value;
+        
+        // Enkripsi input password ke Base64 untuk pencocokan
+        const _pe = btoa(_p);
 
-        if (loginBerhasil) {
-            // Membuat token akses sementara agar tidak bisa bypass URL
+        const _auth = _0xdb.find(a => a.u === _u && a.p === _pe);
+
+        if (_auth) {
+            msg.style.color = "#27ae60";
+            msg.innerText = "Berhasil! Mengalihkan...";
             sessionStorage.setItem("statusLogin", "aktif");
-            sessionStorage.setItem("userAktif", userIn);
+            sessionStorage.setItem("userAktif", _u);
             
-            // Pindah ke file soal.html
-            window.location.href = "soal.html";
+            setTimeout(() => {
+                window.location.href = "soal.html";
+            }, 800);
         } else {
-            error.innerText = "Username atau Password salah!";
+            msg.style.color = "#ff4d4d";
+            msg.innerText = "Akses Ditolak: Akun tidak valid!";
         }
     }
 
-    // Fitur tekan Enter untuk login
-    document.addEventListener("keypress", function(e) {
-        if (e.key === "Enter") { cekLogin(); }
-    });
+    // Event Listeners
+    btn.addEventListener("click", _0xlogin);
+    document.addEventListener("keypress", (e) => { if (e.key === "Enter") _0xlogin(); });
+
+    // Proteksi Tambahan: Blokir Inspect Element Shortcut
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123) return false; // F12
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+    }
 </script>
 
 </body>
