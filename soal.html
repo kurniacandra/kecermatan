@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT Kecermatan - Official</title>
+    <title>CAT Kecermatan Official - System v3.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; }
@@ -15,36 +15,39 @@
         .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
         input[type="text"] { flex: 1; padding: 8px; border: none; text-align: center; font-weight: bold; text-transform: uppercase; }
-        .timer-box { font-size: 2.8rem; font-weight: 900; color: var(--danger); }
+        .timer-box { font-size: 2.8rem; font-weight: 900; color: var(--danger); min-width: 80px; }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
         .key-box { border: 2px solid #333; border-radius: 8px; background: #fff; }
         .key-head { background: #333; color: white; padding: 5px; font-weight: bold; }
         .key-val { font-size: 2.2rem; padding: 12px; font-weight: bold; }
-        #question { font-size: 5.5rem; font-weight: 900; letter-spacing: 25px; margin: 40px 0; color: #000; }
+        #question { font-size: 5.5rem; font-weight: 900; letter-spacing: 25px; margin: 40px 0; color: #000; min-height: 100px; }
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
         .btn-ans { padding: 22px; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-ans:active { transform: scale(0.92); background: var(--accent); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        .total-score { background: var(--primary); color: white; padding: 20px; border-radius: 12px; font-size: 3rem; font-weight: 900; color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .total-score { background: var(--primary); color: white; padding: 20px; border-radius: 12px; font-size: 3.5rem; font-weight: 900; color: var(--accent); margin: 15px 0; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <div class="container">
     <div class="header"><h1 id="peserta-nama">CAT SYSTEM</h1></div>
 
     <div id="screen-setup" class="screen active">
-        <h3>INPUT KARAKTER KOLOM</h3>
+        <h3>PENGATURAN KARAKTER KOLOM</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 100%; max-width: 400px; font-size: 1.2rem;" onclick="mulaiUjian(true)">MULAI SIMULASI</button>
+        <button class="btn-ans" style="background: var(--success); width: 100%; max-width: 400px; font-size: 1.2rem;" onclick="window.mulaiUjianBaru()">MULAI SIMULASI</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div id="col-info" style="font-weight: bold; font-size: 1.5rem;">KOLOM 1</div>
+            <div id="col-info" style="font-weight: bold; font-size: 1.5rem; color: var(--primary);">KOLOM 1</div>
             <div class="timer-box" id="timer">60</div>
-            <div style="font-size: 1.2rem;">B: <span id="live-b" style="color:var(--success); font-weight: bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight: bold;">0</span></div>
+            <div style="font-size: 1.2rem; font-weight: bold;">
+                B: <span id="live-b" style="color:var(--success)">0</span> | 
+                S: <span id="live-s" style="color:var(--danger)">0</span>
+            </div>
         </div>
         <div class="key-row">
             <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
@@ -55,20 +58,20 @@
         </div>
         <div id="question">----</div>
         <div class="ans-grid">
-            <button class="btn-ans" onclick="jawab(0)">A</button>
-            <button class="btn-ans" onclick="jawab(1)">B</button>
-            <button class="btn-ans" onclick="jawab(2)">C</button>
-            <button class="btn-ans" onclick="jawab(3)">D</button>
-            <button class="btn-ans" onclick="jawab(4)">E</button>
+            <button class="btn-ans" onclick="window.jawabSoal(0)">A</button>
+            <button class="btn-ans" onclick="window.jawabSoal(1)">B</button>
+            <button class="btn-ans" onclick="window.jawabSoal(2)">C</button>
+            <button class="btn-ans" onclick="window.jawabSoal(3)">D</button>
+            <button class="btn-ans" onclick="window.jawabSoal(4)">E</button>
         </div>
     </div>
 
     <div id="screen-result" class="screen">
-        <h2>HASIL AKHIR</h2>
+        <h2>HASIL SIMULASI AKHIR</h2>
         <div class="total-score" id="res-total">0</div>
         <div id="res-table"></div>
         <div style="height: 250px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="resetLengkap()">ULANGI DARI AWAL</button>
+        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="window.resetUjian()">ULANGI DARI AWAL</button>
     </div>
 </div>
 
@@ -90,88 +93,83 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // Variabel Global Internal (Module)
     let allKeys = [], currentColumn = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // 1. CEK LOGIN & RECOVERY
+    // --- PROTEKSI & RECOVERY ---
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
         document.getElementById('peserta-nama').innerText = "PESERTA: " + user.email.toUpperCase();
 
-        // Anti-Joki (Refresh Friendly)
         const mySess = localStorage.getItem("sesi_aktif");
         onValue(ref(db, 'active_sessions/' + user.uid), (snap) => {
             const data = snap.val();
             if (data && data.id_sesi !== mySess) {
-                alert("Login di perangkat lain!");
+                alert("Login terdeteksi di perangkat lain!");
                 signOut(auth).then(() => { localStorage.clear(); window.location.href = "index.html"; });
             }
         });
 
-        // LOAD DATA RECOVERY
-        const savedKeys = localStorage.getItem("saved_all_keys");
-        const savedCol = localStorage.getItem("saved_col");
-        const savedStats = localStorage.getItem("saved_stats");
-
+        // Auto-Recovery Progres
+        const savedKeys = localStorage.getItem("rec_keys");
+        const savedCol = localStorage.getItem("rec_col");
+        const savedStats = localStorage.getItem("rec_stats");
         if(savedKeys && savedCol && savedStats) {
             allKeys = JSON.parse(savedKeys);
             currentColumn = parseInt(savedCol);
             stats = JSON.parse(savedStats);
-            showScreen('screen-game');
-            jalankanKolom();
+            tampilkanLayar('screen-game');
+            jalankanGame();
         }
     });
 
-    // Generate Inputs
-    const defaultVal = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
+    // Inisialisasi Input Default
+    const defaultChar = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
     for(let i=0; i<10; i++) {
-        document.getElementById('input-fields').innerHTML += `<div class="input-group"><label>K${i+1}</label><input type="text" id="in-${i}" maxlength="5" placeholder="${defaultVal[i]}"></div>`;
+        document.getElementById('input-fields').innerHTML += `<div class="input-group"><label>K${i+1}</label><input type="text" id="in-${i}" maxlength="5" placeholder="${defaultChar[i]}"></div>`;
     }
 
-    window.mulaiUjian = (isNew = false) => {
-        if(isNew) {
-            allKeys = [];
-            for(let i=0; i<10; i++) {
-                let val = document.getElementById(`in-${i}`).value.toUpperCase() || defaultVal[i];
-                allKeys.push(val.split(''));
-            }
-            localStorage.setItem("saved_all_keys", JSON.stringify(allKeys));
+    // --- FUNGSI UTAMA (Dibuat Window agar bisa diakses Console/Tombol) ---
+    window.mulaiUjianBaru = () => {
+        allKeys = [];
+        for(let i=0; i<10; i++) {
+            let val = document.getElementById(`in-${i}`).value.toUpperCase() || defaultChar[i];
+            allKeys.push(val.split(''));
         }
-        showScreen('screen-game');
-        jalankanKolom();
+        localStorage.setItem("rec_keys", JSON.stringify(allKeys));
+        tampilkanLayar('screen-game');
+        jalankanGame();
     };
 
-    function jalankanKolom() {
+    function jalankanGame() {
         b = 0; s = 0;
         document.getElementById('live-b').innerText = 0;
         document.getElementById('live-s').innerText = 0;
         document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
         
-        const currentKeys = allKeys[currentColumn];
-        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = currentKeys[i];
+        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = allKeys[currentColumn][i];
         
-        // Simpan Progres agar refresh tidak hilang
-        localStorage.setItem("saved_col", currentColumn);
-        localStorage.setItem("saved_stats", JSON.stringify(stats));
+        localStorage.setItem("rec_col", currentColumn);
+        localStorage.setItem("rec_stats", JSON.stringify(stats));
 
-        buatSoal();
-        mulaiTimer();
+        buatSoalAcak();
+        mulaiTimerMundur();
     }
 
-    function buatSoal() {
+    function buatSoalAcak() {
         correctIdx = Math.floor(Math.random() * 5);
-        let currentKeys = allKeys[currentColumn];
-        let q = currentKeys.filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
+        let q = allKeys[currentColumn].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
         document.getElementById('question').innerText = q.join('');
     }
 
-    window.jawab = (idx) => {
+    window.jawabSoal = (idx) => {
         if(idx === correctIdx) b++; else s++;
         document.getElementById('live-b').innerText = b;
         document.getElementById('live-s').innerText = s;
-        buatSoal();
+        buatSoalAcak();
     };
 
-    function mulaiTimer() {
+    function mulaiTimerMundur() {
         let t = 60;
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
@@ -179,26 +177,23 @@
             t--; document.getElementById('timer').innerText = t;
             if(t <= 0) {
                 clearInterval(timerId);
-                stats.push({ col: currentColumn+1, b: b, s: s, t: b+s });
+                stats.push({ col: currentColumn+1, b: b, s: s, total: b+s });
                 currentColumn++;
-                if(currentColumn < 10) { alert("Kolom Selesai! Klik OK Lanjut Kolom Berikutnya."); jalankanKolom(); }
-                else { selesai(); }
+                if(currentColumn < 10) { alert("Lanjut Kolom Berikutnya!"); jalankanGame(); }
+                else { selesaiSimulasi(); }
             }
         }, 1000);
     }
 
-    function selesai() {
-        // Hapus memori recovery karena sudah tamat
-        localStorage.removeItem("saved_col");
-        localStorage.removeItem("saved_stats");
-        localStorage.removeItem("saved_all_keys");
-
-        showScreen('screen-result');
+    function selesaiSimulasi() {
+        localStorage.removeItem("rec_col"); localStorage.removeItem("rec_stats"); localStorage.removeItem("rec_keys");
+        tampilkanLayar('screen-result');
+        
         const bList = stats.map(d => d.b);
         const totalB = bList.reduce((x, y) => x + y, 0);
-        const totalT = stats.reduce((x, y) => x + y.t, 0);
+        const totalT = stats.reduce((x, y) => x + y.total, 0);
 
-        // Rumus Akustik
+        // Rumus Skor
         let panker = totalT / 10;
         let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
         let janker = Math.max(0, 100 - ((Math.max(...bList) - Math.min(...bList)) * 4));
@@ -207,42 +202,47 @@
 
         document.getElementById('res-total').innerText = skorFinal.toFixed(1);
 
-        // Kirim ke Firebase
+        // Save to Firebase
         const user = auth.currentUser;
         if(user) {
-            push(ref(db, 'rekap_skor'), {
-                email: user.email,
-                skor: skorFinal.toFixed(1),
-                waktu: new Date().toLocaleString()
-            });
+            push(ref(db, 'rekap_skor'), { email: user.email, skor: skorFinal.toFixed(1), waktu: new Date().toLocaleString() });
         }
 
-        let h = `<table><tr><th>Kolom</th><th>B</th><th>S</th><th>Total</th></tr>`;
-        stats.forEach(d => { h += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.t}</td></tr>`; });
+        let h = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th><th>Total</th></tr>`;
+        stats.forEach(d => { h += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; });
         document.getElementById('res-table').innerHTML = h + `</table>`;
 
         new Chart(document.getElementById('myChart'), {
             type: 'line',
-            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60' }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension: 0.1 }] }
         });
     }
 
-    window.resetLengkap = () => { 
-        localStorage.removeItem("saved_col");
-        localStorage.removeItem("saved_stats");
-        localStorage.removeItem("saved_all_keys");
-        location.reload(); 
+    // --- PINTU BELAKANG (SKIP CONSOLE) ---
+    window.skip = () => {
+        clearInterval(timerId);
+        stats.push({ col: currentColumn+1, b: 25, s: 0, total: 25 });
+        currentColumn++;
+        if(currentColumn < 10) { jalankanGame(); } else { selesaiSimulasi(); }
+        console.log("Kolom diskip berhasil!");
     };
 
-    function showScreen(id) {
+    window.finishCepat = () => {
+        clearInterval(timerId);
+        for(let i=stats.length; i<10; i++) stats.push({ col: i+1, b: 20, s: 2, total: 22 });
+        selesaiSimulasi();
+    };
+
+    window.resetUjian = () => { localStorage.clear(); location.reload(); };
+
+    function tampilkanLayar(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
     window.addEventListener('keydown', (e) => {
         const m = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
-        if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]);
+        if(m[e.key.toLowerCase()] !== undefined) window.jawabSoal(m[e.key.toLowerCase()]);
     });
 </script>
 </body>
