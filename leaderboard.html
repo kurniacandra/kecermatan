@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Rangking CAT</title>
+    <style>
+        :root { --primary: #1a252f; --accent: #f39c12; --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f3f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .lb-container { background: white; width: 100%; max-width: 600px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .lb-header { background: var(--primary); color: white; padding: 20px; text-align: center; border-bottom: 4px solid var(--accent); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #666; font-size: 0.8rem; text-transform: uppercase; }
+        .rank-1 { background: rgba(255, 215, 0, 0.1); font-weight: bold; }
+        .badge { display: inline-block; width: 25px; height: 25px; border-radius: 50%; line-height: 25px; color: white; font-size: 0.8rem; }
+        .b-1 { background: var(--gold); }
+        .b-2 { background: var(--silver); }
+        .b-3 { background: var(--bronze); }
+        .b-other { background: #eee; color: #666; }
+        .skor-bold { color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+        .btn-back { display: block; width: 100%; padding: 15px; background: var(--primary); color: white; text-align: center; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="lb-container">
+    <div class="lb-header">
+        <h2 style="margin:0">RANGKING SIMULASI</h2>
+        <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.8;">Update Otomatis Real-time</p>
+    </div>
+
+    <table id="table-leaderboard">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Nama Peserta</th>
+                <th>Skor Akhir</th>
+            </tr>
+        </thead>
+        <tbody id="lb-body">
+            <tr><td colspan="3">Mengambil data rangking...</td></tr>
+        </tbody>
+    </table>
+
+    <a href="soal.html" class="btn-back">KEMBALI KE UJIAN</a>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
+        authDomain: "simulasi-2b93b.firebaseapp.com",
+        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com",
+        projectId: "simulasi-2b93b",
+        storageBucket: "simulasi-2b93b.firebasestorage.app",
+        appId: "1:562508858666:web:fa63f71ec175c675e64a53"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Ambil data dari Firebase
+    const skorRef = ref(db, 'rekap_skor');
+    
+    // Kita pantau perubahan data secara real-time
+    onValue(skorRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Ubah objek Firebase jadi Array agar bisa di-sort
+            let listSkor = Object.keys(data).map(key => ({
+                id: key,
+                nama: data[key].nama || "Anonim",
+                skor: parseFloat(data[key].skor)
+            }));
+
+            // SORTING: Skor tertinggi di atas
+            listSkor.sort((a, b) => b.skor - a.skor);
+
+            // Tampilkan maksimal 10 besar saja
+            const top10 = listSkor.slice(0, 10);
+            
+            renderTable(top10);
+        } else {
+            document.getElementById('lb-body').innerHTML = "<tr><td colspan='3'>Belum ada data ujian.</td></tr>";
+        }
+    });
+
+    function renderTable(data) {
+        let html = "";
+        data.forEach((user, index) => {
+            let rank = index + 1;
+            let badgeClass = rank <= 3 ? `b-${rank}` : 'b-other';
+            let rowClass = rank === 1 ? 'rank-1' : '';
+
+            html += `
+                <tr class="${rowClass}">
+                    <td><span class="badge ${badgeClass}">${rank}</span></td>
+                    <td style="text-align:left; text-transform:uppercase;"><b>${user.nama}</b></td>
+                    <td class="skor-bold">${user.skor.toFixed(1)}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('lb-body').innerHTML = html;
+    }
+</script>
+</body>
+</html>
