@@ -33,7 +33,6 @@
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        /* Total Score Badge */
         .total-score-box { background: var(--primary); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         .total-score-box h2 { margin: 0; font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; }
         .total-score-box div { font-size: 2.5rem; font-weight: 900; color: var(--accent); }
@@ -90,7 +89,6 @@
             <h2>Nilai Akhir Kecermatan</h2>
             <div id="res-total">0</div>
         </div>
-        
         <div class="aspek-container">
             <div class="aspek-card"><h4>Kecepatan Kerja</h4><div id="res-panker">0</div><span id="kat-panker"></span></div>
             <div class="aspek-card"><h4>Ketelitian Kerja</h4><div id="res-tianker">0</div><span id="kat-tianker"></span></div>
@@ -178,9 +176,10 @@
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
                 if(currentColumn < TOTAL_COL) { 
-                    alert(`Kolom ${currentColumn} Selesai!`);
+                    alert("Kolom " + currentColumn + " Selesai! Klik OK untuk lanjut.");
                     runColumn(); 
                 } else { 
+                    alert("Tes Selesai!");
                     finish(); 
                 }
             }
@@ -193,15 +192,12 @@
         const totalB = bList.reduce((a, b) => a + b, 0);
         const totalT = statsData.reduce((a, b) => a + b.total, 0);
 
-        // Perhitungan 4 Aspek
         let panker = totalT / TOTAL_COL;
         let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
         let deviasi = Math.max(...bList) - Math.min(...bList);
         let janker = Math.max(0, 100 - (deviasi * 4));
         let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
 
-        // Perhitungan Nilai Akhir (Skala 100)
-        // Bobot: Kecepatan 30%, Ketelitian 40%, Keajegan 15%, Ketahanan 15%
         let nAkustik = (Math.min(panker*1.8, 100) * 0.3) + (tianker * 0.4) + (janker * 0.15) + (Math.min(hanker*1.8, 100) * 0.15);
 
         document.getElementById('res-total').innerText = nAkustik.toFixed(1);
@@ -223,10 +219,7 @@
             type: 'bar',
             data: {
                 labels: statsData.map(d => "K" + d.col),
-                datasets: [
-                    { label: 'Benar', data: statsData.map(d => d.b), backgroundColor: '#27ae60' },
-                    { label: 'Salah', data: statsData.map(d => d.s), backgroundColor: '#e74c3c' }
-                ]
+                datasets: [{ label: 'Benar', data: bList, backgroundColor: '#27ae60' }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
