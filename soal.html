@@ -20,33 +20,45 @@
         .header h1 { margin: 0; font-size: 1.4rem; }
         .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
         .active { display: block; }
+        
+        /* Setup Grid */
         .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
         .input-group label { width: 70px; font-weight: bold; font-size: 0.85rem; color: #555; }
         input[type="text"] { flex: 1; padding: 8px; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
+        
+        /* Game Stats */
         .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
         .timer-box { font-size: 2.2rem; font-weight: 800; color: var(--danger); }
+        
+        /* Kotak Kunci (A-E) */
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
         .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
         .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
         .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
+        
+        /* Area Soal */
         #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; user-select: none; }
+        
+        /* Tombol Jawaban */
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-ans:hover { background: var(--accent); opacity: 0.9; }
+
+        /* Hasil Akhir */
         .total-score-badge { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: inline-block; min-width: 200px; }
         .total-score-badge div { font-size: 3.5rem; font-weight: 900; color: var(--accent); }
         .aspek-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
         .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); }
         .aspek-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
         .aspek-card div { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background: #f2f2f2; }
         
-        /* Gaya Khusus Credit */
-        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
+        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; margin-top: auto; }
         .ig-link { color: var(--primary); font-weight: bold; text-decoration: none; }
-        .ig-link:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -108,6 +120,7 @@
     const TOTAL_COL = 10, TIME_LIMIT = 60; 
     let allColumnKeys = [], currentColumn = 0, scoreCorrect = 0, scoreWrong = 0, statsData = [], timerId, currentCorrectIdx = -1, myChart;
 
+    // Generate Input Fields
     const examples = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i < TOTAL_COL; i++) {
@@ -162,7 +175,6 @@
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
                 if(currentColumn < TOTAL_COL) { 
-                    alert(`Kolom ${currentColumn} Selesai!`); 
                     runColumn(); 
                 } else { 
                     finish(); 
