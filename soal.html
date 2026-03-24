@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v12.0 - Debug Ready</title>
+    <title>CAT KECERMATAN v13.0 - History & Remember Symbols</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -15,10 +15,10 @@
         
         /* SETUP INPUT */
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
-        .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; transition: 0.3s; }
+        .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; }
         .input-group.error { border: 2px solid var(--danger); background: #fff0f0; }
         input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; outline: none; background: transparent; text-transform: uppercase; letter-spacing: 2px; }
-        .error-msg { color: var(--danger); font-size: 0.6rem; display: none; font-weight: bold; margin-top: 5px; line-height: 1.2; }
+        .error-msg { color: var(--danger); font-size: 0.6rem; display: none; font-weight: bold; margin-top: 5px; }
         .input-group.error .error-msg { display: block; }
 
         /* GAMEPLAY */
@@ -32,13 +32,13 @@
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         
-        .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .jeda-box { background: white; padding: 40px; border-radius: 20px; text-align: center; border-bottom: 8px solid var(--accent); min-width: 320px; }
-        .jeda-timer { font-size: 6rem; font-weight: 900; color: var(--danger); margin: 10px 0; }
-
+        /* RESULTS & HISTORY */
         table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .history-container { margin-top: 25px; border-top: 2px dashed #ccc; padding-top: 20px; text-align: left; }
         .final-score-box { background: var(--primary); color: var(--accent); padding: 20px; border-radius: 15px; margin: 15px 0; }
+        
+        .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -48,10 +48,10 @@
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Silakan isi 10 kolom kunci di bawah ini.</p>
+        <p style="font-size: 0.8rem; color: #666;">Simbol terakhir Anda telah dimuat otomatis.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
-            <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ISI OTOMATIS</button>
+            <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ACAK SIMBOL</button>
             <button onclick="window.mulai()" style="flex:2; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1.1rem;">MULAI UJIAN</button>
         </div>
     </div>
@@ -82,23 +82,38 @@
             <h1 style="font-size: 4.5rem; margin:0;" id="res-total">0</h1>
             <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
         </div>
+        
         <div id="rekap-tabel" style="overflow-x:auto;"></div>
         <div style="height: 180px;"><canvas id="mainChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">ULANGI</button>
+
+        <div class="history-container">
+            <h3 style="text-align: center;">RIWAYAT SKOR ANDA</h3>
+            <table id="user-history-table">
+                <thead>
+                    <tr style="background: #eee;">
+                        <th>Waktu</th>
+                        <th>Skor</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">UJIAN LAGI</button>
     </div>
 </div>
 
 <div id="popup-jeda" class="overlay-jeda">
-    <div class="jeda-box">
+    <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; border-bottom: 8px solid var(--accent);">
         <h2 style="margin:0;">KOLOM SELESAI</h2>
-        <div id="jeda-countdown" class="jeda-timer">5</div>
+        <div id="jeda-countdown" style="font-size: 6rem; font-weight: 900; color: var(--danger); margin: 10px 0;">5</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = { apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", authDomain: "simulasi-2b93b.firebaseapp.com", databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", projectId: "simulasi-2b93b", storageBucket: "simulasi-2b93b.firebasestorage.app", appId: "1:562508858666:web:fa63f71ec175c675e64a53" };
     const app = initializeApp(firebaseConfig);
@@ -107,62 +122,62 @@
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // VALIDASI INPUT (PESAN ERROR KHUSUS)
-    function validate(input, group) {
-        const val = input.value.toUpperCase();
-        const isDuplicate = new Set(val).size !== val.length;
-        if (isDuplicate || val.length < 5) {
-            group.classList.add('error'); return false;
-        } else {
-            group.classList.remove('error'); return true;
+    // 1. FITUR REMEMBER SYMBOLS (Load dari LocalStorage)
+    function loadSavedSymbols() {
+        const saved = JSON.parse(localStorage.getItem('last_symbols') || "[]");
+        for(let i=0; i<10; i++) {
+            const el = document.getElementById(`in-${i}`);
+            if(saved[i]) el.value = saved[i];
         }
     }
 
-    // BUILD INPUTS
+    function validate(input, group) {
+        const val = input.value.toUpperCase();
+        const isDuplicate = new Set(val).size !== val.length;
+        if (isDuplicate || val.length < 5) { group.classList.add('error'); return false; }
+        group.classList.remove('error'); return true;
+    }
+
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
         div.className = 'input-group'; div.id = `g-${i}`;
         div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> 
-        <div class="error-msg">Wajib 5 Karakter Unik!<br>(Tidak Boleh Huruf Ganda)</div>`;
+        <div class="error-msg">Wajib 5 Karakter Unik!</div>`;
         inputArea.appendChild(div);
         const inp = div.querySelector('input');
         inp.addEventListener('input', () => validate(inp, div));
     }
 
-    // AUTOFILL (UNIK PER KOLOM)
+    loadSavedSymbols();
+
     window.autoFill = () => {
-        const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+=?[]{}<>";
+        const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+=?";
         for(let i=0; i<10; i++) {
-            let currentPool = pool.split("").sort(() => Math.random() - 0.5);
-            const chunk = currentPool.slice(0, 5).join("");
-            const el = document.getElementById(`in-${i}`);
-            el.value = chunk;
-            validate(el, document.getElementById(`g-${i}`));
+            let chunk = pool.split("").sort(() => Math.random() - 0.5).slice(0, 5).join("");
+            document.getElementById(`in-${i}`).value = chunk;
+            validate(document.getElementById(`in-${i}`), document.getElementById(`g-${i}`));
         }
     };
 
     onAuthStateChanged(auth, (user) => {
-        if (!user) { window.location.href = "index.html"; return; }
-        let mySess = localStorage.getItem("sess_id") || "sess_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("sess_id", mySess);
-        onValue(ref(db, 'active_sessions/' + user.uid), (snap) => {
-            if (snap.val() && snap.val().id !== mySess) {
-                alert("Login di device lain!"); signOut(auth).then(()=> location.href="index.html");
-            }
-        });
-        set(ref(db, 'active_sessions/' + user.uid), { id: mySess, email: user.email });
+        if (!user) return;
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
     });
 
     window.mulai = () => {
-        allKeys = []; let valid = true;
+        allKeys = []; let valid = true; let toSave = [];
         for(let i=0; i<10; i++) {
             const el = document.getElementById(`in-${i}`);
             if(!validate(el, document.getElementById(`g-${i}`))) valid = false;
             allKeys.push(el.value.toUpperCase().split(''));
+            toSave.push(el.value.toUpperCase());
         }
-        if(!valid) { alert("Tiap kolom harus 5 karakter unik!"); return; }
+        if(!valid) { alert("Perbaiki input kolom!"); return; }
+        
+        // Simpan simbol agar bisa dipakai lagi nanti
+        localStorage.setItem('last_symbols', JSON.stringify(toSave));
+        
         currentCol = 0; stats = []; showS('screen-game'); run();
     };
 
@@ -204,6 +219,26 @@
         const intJ = setInterval(() => { sisa--; document.getElementById('jeda-countdown').innerText = sisa; if(sisa <= 0) { clearInterval(intJ); p.style.display = 'none'; run(); }}, 1000);
     }
 
+    // 2. FITUR HISTORY (Load Riwayat Akun Ini Saja)
+    function loadMyHistory() {
+        const email = auth.currentUser.email;
+        const historyQuery = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(email));
+        
+        onValue(historyQuery, (snapshot) => {
+            const data = snapshot.val();
+            let html = "";
+            if(data) {
+                const list = Object.values(data).reverse().slice(0, 5); // Ambil 5 terakhir
+                list.forEach(item => {
+                    html += `<tr><td>${item.waktu}</td><td><b>${item.skor}</b></td></tr>`;
+                });
+            } else {
+                html = "<tr><td colspan='2'>Belum ada riwayat.</td></tr>";
+            }
+            document.getElementById('history-body').innerHTML = html;
+        });
+    }
+
     function finish() {
         showS('screen-result');
         const bList = stats.map(d => d.b);
@@ -219,32 +254,32 @@
 
         document.getElementById('res-total').innerText = final.toFixed(1);
         document.getElementById('aspek-list').innerHTML = `
-            <div style="background:#eee;padding:5px">Kecepatan: ${panker.toFixed(1)}</div>
-            <div style="background:#eee;padding:5px">Ketelitian: ${tianker.toFixed(1)}%</div>
-            <div style="background:#eee;padding:5px">Kestabilan: ${Math.max(0,janker).toFixed(1)}</div>
-            <div style="background:#eee;padding:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
+            <div>Kecepatan: ${panker.toFixed(1)}</div>
+            <div>Ketelitian: ${tianker.toFixed(1)}%</div>
+            <div>Kestabilan: ${Math.max(0,janker).toFixed(1)}</div>
+            <div>Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
-
-        let h = "<table><tr><th>DATA</th>" + stats.map(d => `<th>K${d.col}</th>`).join('') + "</tr>";
-        h += "<tr><td>BENAR</td>" + bList.map(v => `<td>${v}</td>`).join('') + "</tr></table>";
-        document.getElementById('rekap-tabel').innerHTML = h;
 
         new Chart(document.getElementById('mainChart'), {
             type: 'line', data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension:0.3 }] }
         });
-        push(ref(db, 'rekap_skor'), { nama: auth.currentUser.email, skor: final.toFixed(1), waktu: new Date().toLocaleString() });
+
+        // Kirim skor dan muat history
+        push(ref(db, 'rekap_skor'), { 
+            nama: auth.currentUser.email, 
+            skor: final.toFixed(1), 
+            waktu: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString() 
+        });
+        loadMyHistory();
     }
 
     window.ulang = () => { location.reload(); };
     function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
 
-    // DEBUG EXPORT (Agar Console bisa akses)
-    window.stats = stats;
-    window.currentCol = currentCol;
-    window.run = run;
-    window.finish = finish;
-    window.showS = showS;
+    // Debugging Tools
+    window.stats = stats; window.currentCol = currentCol; window.run = run; window.finish = finish;
+    window.b = () => b; window.s = () => s;
 </script>
 </body>
 </html>
