@@ -122,6 +122,14 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+    // Fungsi untuk menerjemahkan angka menjadi Grade Psikologi
+function getStatusPsikologi(nilai) {
+    if (nilai >= 80) return { label: "SANGAT BAIK (ST)", color: "#1b5e20" };
+    if (nilai >= 65) return { label: "BAIK (T)", color: "#2e7d32" };
+    if (nilai >= 50) return { label: "CUKUP (C)", color: "#f9a825" };
+    if (nilai >= 40) return { label: "KURANG (K)", color: "#d32f2f" };
+    return { label: "SANGAT KURANG (SK)", color: "#b71c1c" };
+}
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
 
