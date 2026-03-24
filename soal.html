@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <script>
+        // Proteksi: Cek apakah user sudah login melalui index.html
         if (sessionStorage.getItem("statusLogin") !== "aktif") {
             alert("Akses ditolak! Silakan login terlebih dahulu.");
             window.location.href = "index.html";
@@ -19,36 +20,33 @@
         .header h1 { margin: 0; font-size: 1.4rem; }
         .screen { display: none; padding: 25px; text-align: center; flex-grow: 1; }
         .active { display: block; }
-        
-        /* Stats Area */
+        .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+        .input-group label { width: 70px; font-weight: bold; font-size: 0.85rem; color: #555; }
+        input[type="text"] { flex: 1; padding: 8px; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
         .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
         .timer-box { font-size: 2.2rem; font-weight: 800; color: var(--danger); }
-        
-        /* Kotak Kunci (A-E) */
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; background: #fff; }
+        .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
         .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
-        .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; color: #000; }
-        
-        /* Soal */
+        .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
         #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; user-select: none; }
-        
-        /* Tombol Jawaban Besar (Normal) */
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-ans:hover { background: var(--accent); transform: translateY(-2px); }
-
-        /* Setup & Result */
-        .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .input-group { display: flex; align-items: center; background: #fff; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
-        .input-group label { width: 60px; font-weight: bold; }
-        input[type="text"] { flex: 1; border: none; outline: none; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .total-score-badge { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: inline-block; min-width: 200px; }
+        .total-score-badge div { font-size: 3.5rem; font-weight: 900; color: var(--accent); }
         .aspek-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
         .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); }
+        .aspek-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+        .aspek-card div { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-
-        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; margin-top: auto; }
+        th { background: #f2f2f2; }
+        
+        /* Gaya Khusus Credit */
+        .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
+        .ig-link { color: var(--primary); font-weight: bold; text-decoration: none; }
+        .ig-link:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -64,9 +62,9 @@
 
     <div id="screen-game" class="screen">
         <div class="stats-top">
-            <div id="col-info" style="font-weight: bold; font-size: 1.2rem;">KOLOM 1</div>
+            <div style="text-align: left;"><span id="col-info" style="font-weight: bold; font-size: 1.2rem;">KOLOM 1</span></div>
             <div class="timer-box" id="timer">60</div>
-            <div>B: <span id="live-b" style="color:var(--success);">0</span> | S: <span id="live-s" style="color:var(--danger);">0</span></div>
+            <div>B: <span id="live-b" style="color:var(--success); font-weight:bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight:bold;">0</span></div>
         </div>
         <div class="key-row">
             <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
@@ -86,18 +84,23 @@
     </div>
 
     <div id="screen-result" class="screen">
+        <div class="total-score-badge">
+            <h2 style="margin:0; font-size:0.9rem; opacity:0.8;">Nilai Akhir Kecermatan</h2>
+            <div id="res-total">0</div>
+        </div>
         <div class="aspek-container">
-            <div class="aspek-card"><h4>Skor Akhir</h4><div id="res-total" style="font-size:2rem; font-weight:bold;">0</div></div>
-            <div class="aspek-card"><h4>Ketepatan</h4><div id="res-ketepatan">0%</div></div>
-            <div class="aspek-card"><h4>Ketahanan</h4><div id="res-ketahanan">0%</div></div>
+            <div class="aspek-card"><h4>Kecepatan</h4><div id="res-kecepatan">0</div></div>
+            <div class="aspek-card"><h4>Ketepatan</h4><div id="res-ketepatan">0</div></div>
+            <div class="aspek-card"><h4>Ketahanan</h4><div id="res-ketahanan">0</div></div>
         </div>
         <div id="final-table"></div>
-        <div style="height: 250px; margin-top: 15px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size: 1.1rem;" onclick="resetTest()">ULANGI TES</button>
+        <div style="height: 300px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
+        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="resetTest()">ULANGI TES</button>
     </div>
 
     <div class="credit-footer">
-        Aplikasi Simulasi &copy; 2026 | <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" style="color: var(--primary); font-weight: bold; text-decoration: none;">By KurniaCandra</a>
+        Aplikasi Simulasi &copy; 2026 | 
+        <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" class="ig-link">Credit by KurniaCandra</a>
     </div>
 </div>
 
@@ -111,15 +114,11 @@
         inputArea.innerHTML += `<div class="input-group"><label>K-${i+1}</label><input type="text" id="input-${i}" maxlength="5" placeholder="${examples[i]}"></div>`;
     }
 
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
     function validateAndStart() {
         allColumnKeys = [];
         for(let i=0; i < TOTAL_COL; i++) {
-            let val = document.getElementById(`input-${i}`).value.replace(/\s/g, '').toUpperCase() || examples[i];
+            let inputEl = document.getElementById(`input-${i}`);
+            let val = inputEl.value.replace(/\s/g, '').toUpperCase() || inputEl.getAttribute('placeholder');
             if(val.length !== 5) return alert(`Lengkapi Kolom ${i+1}!`);
             allColumnKeys.push(val.split(''));
         }
@@ -140,7 +139,8 @@
     function newQuestion() {
         currentCorrectIdx = Math.floor(Math.random() * 5);
         let keys = allColumnKeys[currentColumn];
-        let q = keys.filter((_, idx) => idx !== currentCorrectIdx).sort(() => 0.5 - Math.random());
+        let q = keys.filter((_, idx) => idx !== currentCorrectIdx);
+        q.sort(() => 0.5 - Math.random());
         document.getElementById('question').innerText = q.join('');
     }
 
@@ -161,7 +161,12 @@
                 clearInterval(timerId);
                 statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
                 currentColumn++;
-                if(currentColumn < TOTAL_COL) runColumn(); else finish();
+                if(currentColumn < TOTAL_COL) { 
+                    alert(`Kolom ${currentColumn} Selesai!`); 
+                    runColumn(); 
+                } else { 
+                    finish(); 
+                }
             }
         }, 1000);
     }
@@ -170,28 +175,51 @@
         showScreen('screen-result');
         const totalB = statsData.reduce((a, b) => a + b.b, 0);
         const totalT = statsData.reduce((a, b) => a + b.total, 0);
-        let avgKec = totalT / TOTAL_COL;
-        let pTepat = totalT > 0 ? (totalB / totalT) * 100 : 0;
-        const bList = statsData.map(d => d.b);
-        let ketahanan = Math.max(0, 100 - ((Math.max(...bList) - Math.min(...bList)) * 2));
+        
+        let avgKecepatan = totalT / TOTAL_COL;
+        let skorKecepatan = avgKecepatan > 100 ? 100 : avgKecepatan;
+        let persentaseKetepatan = totalT > 0 ? (totalB / totalT) * 100 : 0;
+        const benarSaja = statsData.map(d => d.b);
+        const deviasi = Math.max(...benarSaja) - Math.min(...benarSaja);
+        let ketahananVal = Math.max(0, 100 - (deviasi * 2)); 
 
-        document.getElementById('res-total').innerText = ((avgKec * 0.3) + (pTepat * 0.5) + (ketahanan * 0.2)).toFixed(1);
-        document.getElementById('res-ketepatan').innerText = pTepat.toFixed(1) + "%";
-        document.getElementById('res-ketahanan').innerText = ketahanan.toFixed(1) + "%";
+        let nilaiAkhir = ((skorKecepatan * 0.3) + (persentaseKetepatan * 0.5) + (ketahananVal * 0.2)).toFixed(1);
 
-        let html = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th></tr>`;
-        statsData.forEach(d => { html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td></tr>`; });
-        document.getElementById('final-table').innerHTML = html + `</table>`;
+        document.getElementById('res-total').innerText = nilaiAkhir;
+        document.getElementById('res-kecepatan').innerText = avgKecepatan.toFixed(1);
+        document.getElementById('res-ketepatan').innerText = persentaseKetepatan.toFixed(1) + "%";
+        document.getElementById('res-ketahanan').innerText = ketahananVal.toFixed(1) + "%";
+
+        let html = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th><th>Total</th></tr>`;
+        statsData.forEach(d => { 
+            html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; 
+        });
+        html += `</table>`;
+        document.getElementById('final-table').innerHTML = html;
 
         if (myChart) myChart.destroy();
         myChart = new Chart(document.getElementById('myChart'), {
-            type: 'line',
-            data: { labels: statsData.map(d => d.col), datasets: [{ label: 'Data Benar', data: bList, borderColor: '#27ae60', fill: false }] },
-            options: { maintainAspectRatio: false }
+            type: 'bar',
+            data: {
+                labels: statsData.map(d => "K" + d.col),
+                datasets: [
+                    { label: 'Benar', data: statsData.map(d => d.b), backgroundColor: '#27ae60' },
+                    { label: 'Salah', data: statsData.map(d => d.s), backgroundColor: '#e74c3c' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function resetTest() { currentColumn = 0; statsData = []; showScreen('screen-setup'); }
+    function resetTest() {
+        currentColumn = 0; statsData = [];
+        showScreen('screen-setup');
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
 
     window.addEventListener('keydown', (e) => {
         const map = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
