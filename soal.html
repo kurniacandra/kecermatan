@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v16.0 - Super Lock & Glow Line Chart</title>
+    <title>CAT KECERMATAN v16.5 - Silent Kick Mode</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -48,15 +48,14 @@
 <body oncontextmenu="return false;">
 
 <div id="lock-overlay">
-    <h1 style="font-size: 4rem; color:var(--danger);">⚠️ AKSES DITOLAK ⚠️</h1>
-    <p style="font-size: 1.5rem; max-width: 600px;">Akun Anda sedang digunakan untuk ujian di perangkat lain.<br>Sesi di perangkat ini telah diputus untuk menjaga integritas ujian.</p>
-    <button class="btn-ans" style="background:var(--accent); width:200px; margin-top:20px;" onclick="window.location.href='index.html'">KEMBALI KE LOGIN</button>
+    <h1 style="font-size: 4rem; color:var(--danger);">⚠️ SESI BERAKHIR ⚠️</h1>
+    <p style="font-size: 1.5rem; max-width: 600px;">Akun Anda telah login di perangkat lain.<br>Sesi di perangkat ini otomatis diputus.</p>
+    <button class="btn-ans" style="background:var(--accent); width:200px; margin-top:20px;" onclick="window.location.href='index.html'">LOGIN KEMBALI</button>
 </div>
 
 <div class="container">
     <div class="header">
         <h3 id="user-display" style="margin:0">MENGHUBUNGKAN...</h3>
-        <span id="lock-status" style="position:absolute; right:15px; top:15px; font-size:0.7rem; color:var(--success); display:none;">🔒 TERKUNCI</span>
     </div>
 
     <div id="screen-setup" class="screen active">
@@ -135,36 +134,42 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, mySessionId = null;
+    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
+    
+    // Gunakan sessionStorage agar ID Sesi bertahan selama tab dibuka
+    if(!sessionStorage.getItem('active_session_id')){
+        sessionStorage.setItem('active_session_id', 'sess_' + Date.now() + Math.random().toString(36).substr(2, 5));
+    }
+    const mySessionId = sessionStorage.getItem('active_session_id');
 
-    // FITUR 1: SUPER LOCK ENGINE (ANTI-JOKI DUAL LOGI)
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
         
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
         
-        // Buat ID unik sesi untuk tab ini (jika belum ada)
-        if(!sessionStorage.getItem('active_session_id')){
-            sessionStorage.setItem('active_session_id', 'sess_' + Date.now());
-        }
-        mySessionId = sessionStorage.getItem('active_session_id');
-
-        // Monitor status kunci di Firebase
         const userStatusRef = ref(db, 'user_status/' + user.uid);
+
+        // SILENT LOCK MONITOR: Memantau database tanpa menampilkan "Terkunci" di UI
         onValue(userStatusRef, (snapshot) => {
             const data = snapshot.val();
-            // Jika status 'Ujian' dan ID Sesi berbeda, tendang!
-            if (data && data.status === 'Ujian' && data.sessionId !== mySessionId) {
+            // Jika di database ada ID Sesi yang berbeda, berarti ada login baru di device lain
+            if (data && data.sessionId && data.sessionId !== mySessionId) {
                 document.getElementById('lock-overlay').style.display = 'flex';
-                // Paksa logout agar tidak bisa akses data
                 signOut(auth);
             }
         });
-        
+
+        // Daftarkan diri sebagai sesi aktif saat masuk halaman ini
+        set(userStatusRef, {
+            sessionId: mySessionId,
+            lastSeen: new Date().getTime(),
+            email: user.email
+        });
+
         loadSavedSymbols();
     });
 
-    // VALIDASI INPUT
+    // ... (Sisa fungsi validate, loadSavedSymbols, autoFill tetap sama) ...
     function validate(input, group) {
         const val = input.value.toUpperCase();
         const isDuplicate = new Set(val).size !== val.length;
@@ -176,8 +181,7 @@
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
         div.className = 'input-group'; div.id = `g-${i}`;
-        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> 
-        <div class="error-msg">Wajib 5 Karakter Unik!</div>`;
+        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> <div class="error-msg">Wajib 5 Karakter Unik!</div>`;
         inputArea.appendChild(div);
         const inp = div.querySelector('input');
         inp.addEventListener('input', () => validate(inp, div));
@@ -209,20 +213,7 @@
             toSave.push(el.value.toUpperCase());
         }
         if(!valid) return;
-        
         localStorage.setItem('last_symbols', JSON.stringify(toSave));
-        
-        // --- AKTIFKAN KUNCI SUPER (LOCK) DI FIREBASE ---
-        const userStatusRef = ref(db, 'user_status/' + auth.currentUser.uid);
-        set(userStatusRef, {
-            status: 'Ujian',
-            sessionId: mySessionId,
-            waktuMulai: new Date().getTime()
-        });
-        // Pastikan kunci terhapus jika browser crash/tutup paksa
-        onDisconnect(userStatusRef).remove();
-
-        document.getElementById('lock-status').style.display = 'block';
         currentCol = 0; stats = []; showS('screen-game'); run();
     };
 
@@ -246,7 +237,7 @@
     window.jawab = (idx) => { if(idx === correctIdx) b++; else s++; document.getElementById('live-b').innerText = b; document.getElementById('live-s').innerText = s; makeQ(); };
 
     function startT() {
-        let t = 15; // DURASI 15 DETIK (UJI COBA)
+        let t = 15;
         document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
@@ -260,7 +251,7 @@
     }
 
     function tampilkanJeda() {
-        const p = document.getElementById('popup-jeda'); let sisa = 3; // JEDA 3 DETIK
+        const p = document.getElementById('popup-jeda'); let sisa = 3;
         p.style.display = 'flex'; document.getElementById('jeda-countdown').innerText = sisa;
         const intJ = setInterval(() => { sisa--; document.getElementById('jeda-countdown').innerText = sisa; if(sisa <= 0) { clearInterval(intJ); p.style.display = 'none'; run(); }}, 1000);
     }
@@ -281,13 +272,7 @@
 
     function finish() {
         showS('screen-result');
-        
-        // --- BUKA KUNCI (UNLOCK) SETELAH SELESAI ---
-        set(ref(db, 'user_status/' + auth.currentUser.uid), { status: 'Selesai' });
-        document.getElementById('lock-status').style.display = 'none';
-
         const bList = stats.map(d => d.b);
-        const sList = stats.map(d => d.s); // Ambil data salah
         const totB = bList.reduce((a,x) => a+x, 0);
         const totS = stats.reduce((a,x) => a+x.s, 0);
         const totT = totB + totS;
@@ -306,9 +291,7 @@
             <div style="background:#f1f1f1;padding:8px;border-radius:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
 
-        // --- FITUR 3: GRAFIK "TALI" (GLOW LINE) DENGAN INFO BENAR/SALAH ---
-        const ctx = document.getElementById('glowLineChart').getContext('react');
-        new Chart(ctx, {
+        new Chart(document.getElementById('glowLineChart'), {
             type: 'line', 
             data: { 
                 labels: stats.map(d => "K"+d.col), 
@@ -316,74 +299,33 @@
                     label:'Benar', 
                     data: bList, 
                     borderColor:'#27ae60', 
-                    tension:0.4, // Membuat tali melengkung mulus
+                    tension:0.4, 
                     fill:true, 
-                    backgroundColor:'rgba(39,174,96,0.1)', // Hijau Glow Transparan
-                    borderWidth: 4, // Tali lebih tebal
+                    backgroundColor:'rgba(39,174,96,0.1)', 
+                    borderWidth: 4,
                     pointBackgroundColor: '#fff',
                     pointBorderColor: '#27ae60',
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    // Shadow effect (Glow)
-                    shadowColor: 'rgba(39,174,96,0.5)',
-                    shadowBlur: 10,
-                    shadowOffsetX: 0,
-                    shadowOffsetY: 4
+                    pointRadius: 6
                 }] 
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { display: false } // Hilangkan grid visual kotak
-                    },
-                    x: {
-                        grid: { display: false } // Hilangkan grid visual kotak
-                    }
-                },
-                plugins: {
-                    legend: { display: false }, // Hilangkan kotak legend
-                    // TOOLTIP KUSTOM UNTUK MENAMPILKAN SALAH & BENAR
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
-                        padding: 10,
-                        cornerRadius: 8,
-                        callbacks: {
-                            // Menambahkan info Salah di tooltip
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const benar = stats[index].b;
-                                const salah = stats[index].s;
-                                return [`✅ Benar: ${benar}`, `❌ Salah: ${salah}`];
-                            }
-                        }
-                    }
-                }
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => [`✅ Benar: ${stats[ctx.dataIndex].b}`, `❌ Salah: ${stats[ctx.dataIndex].s}`] } } }
             }
         });
 
-        // SIMPAN KE FIREBASE
         push(ref(db, 'rekap_skor'), { 
             nama: auth.currentUser.email, 
             skor: final.toFixed(1), 
             waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID') 
         });
-
         loadMyHistory();
     }
 
     window.ulang = () => { location.reload(); };
     function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
-
-    // DEBUG EXPORT (Untuk Script Bypass)
-    window.stats = stats; window.currentCol = currentCol; window.run = run; window.finish = finish;
-    window.b = () => b; window.s = () => s;
 </script>
 </body>
 </html>
