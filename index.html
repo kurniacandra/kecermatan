@@ -1,1 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Kedinasan & AKPOL</title>
+    <style>
+        /* Tampilan Agar Bagus di HP */
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; text-align: center; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { color: #2c3e50; }
+        input { padding: 10px; width: 80%; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #219150; }
+        
+        /* Gaya Tabel Leaderboard */
+        #papan-skor { margin-top: 30px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #2c3e50; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .rank-1 { color: #d4af37; font-weight: bold; } /* Emas */
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h2>Simulasi CAT Taruna</h2>
+    <p>Masukkan nama dan skor untuk simulasi:</p>
+    
+    <input type="text" id="namaInput" placeholder="Nama Lengkap">
+    <input type="number" id="skorInput" placeholder="Skor Anda">
+    <br>
+    <button onclick="simpanSkor()">Kirim Skor</button>
+
+    <hr>
+
+    <div id="papan-skor">
+        <h3 style="text-align: center;">🏆 Top 10 Peringkat 🏆</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Nama</th>
+                    <th>Skor</th>
+                </tr>
+            </thead>
+            <tbody id="isi-leaderboard">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, query, orderByChild, limitToLast } 
+           from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Konfigurasi Firebase kamu
+    const firebaseConfig = {
+        apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
+        authDomain: "simulasi-2b93b.firebaseapp.com",
+        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com",
+        projectId: "simulasi-2b93b",
+        storageBucket: "simulasi-2b93b.firebasestorage.app",
+        messagingSenderId: "562508858666",
+        appId: "1:562508858666:web:fa63f71ec175c675e64a53",
+        measurementId: "G-8981EPBNW5"
+    };
+
+    // Inisialisasi
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // FUNGSI UNTUK KIRIM DATA (Panggil via Button)
+    window.simpanSkor = function() {
+        const nama = document.getElementById("namaInput").value;
+        const skor = document.getElementById("skorInput").value;
+
+        if (nama === "" || skor === "") {
+            alert("Isi nama dan skor dulu!");
+            return;
+        }
+
+        const dbRef = ref(db, 'leaderboard');
+        const dataBaru = push(dbRef);
+        
+        set(dataBaru, {
+            nama: nama,
+            skor: parseInt(skor),
+            waktu: Date.now()
+        }).then(() => {
+            alert("Skor Berhasil Terkirim!");
+            document.getElementById("namaInput").value = "";
+            document.getElementById("skorInput").value = "";
+        });
+    }
+
+    // FUNGSI UNTUK MENAMPILKAN LEADERBOARD SECARA REAL-TIME
+    const q = query(ref(db, 'leaderboard'), orderByChild('skor'), limitToLast(10));
+    onValue(q, (snapshot) => {
+        const tableBody = document.getElementById("isi-leaderboard");
+        tableBody.innerHTML = "";
+        
+        let data = [];
+        snapshot.forEach((child) => {
+            data.push(child.val());
+        });
+
+        // Balik urutan (terbesar di atas)
+        data.reverse().forEach((item, index) => {
+            let row = `<tr>
+                <td>${index + 1}</td>
+                <td class="${index === 0 ? 'rank-1' : ''}">${item.nama}</td>
+                <td>${item.skor}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    });
+</script>
+
+</body>
+</html>
