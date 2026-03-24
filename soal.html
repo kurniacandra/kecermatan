@@ -22,29 +22,29 @@
         .key-val { font-size: 2.2rem; padding: 12px; font-weight: bold; }
         #question { font-size: 5.5rem; font-weight: 900; letter-spacing: 25px; margin: 40px 0; color: #000; }
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
-        .btn-ans { padding: 22px; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.1s; }
+        .btn-ans { padding: 22px; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-ans:active { transform: scale(0.92); background: var(--accent); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
         .total-score { background: var(--primary); color: white; padding: 20px; border-radius: 12px; font-size: 3rem; font-weight: 900; color: var(--accent); }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
 <div class="container">
-    <div class="header"><h1 id="peserta-nama">MEMUAT SISTEM...</h1></div>
+    <div class="header"><h1 id="peserta-nama">CAT SYSTEM</h1></div>
 
     <div id="screen-setup" class="screen active">
-        <h3>PENGATURAN KOLOM</h3>
+        <h3>INPUT KARAKTER KOLOM</h3>
         <div class="setup-grid" id="input-fields"></div>
-        <button class="btn-ans" style="background: var(--success); width: 100%; max-width: 400px; font-size: 1.2rem;" onclick="mulaiUjian()">MULAI SIMULASI</button>
+        <button class="btn-ans" style="background: var(--success); width: 100%; max-width: 400px; font-size: 1.2rem;" onclick="mulaiUjian(true)">MULAI SIMULASI</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div id="col-info" style="font-weight: bold; font-size: 1.5rem;">KOLOM 1</div>
             <div class="timer-box" id="timer">60</div>
-            <div style="font-size: 1.2rem;">B: <span id="live-b" style="color:var(--success); font-weight: bold;">0</span></div>
+            <div style="font-size: 1.2rem;">B: <span id="live-b" style="color:var(--success); font-weight: bold;">0</span> | S: <span id="live-s" style="color:var(--danger); font-weight: bold;">0</span></div>
         </div>
         <div class="key-row">
             <div class="key-box"><div class="key-head">A</div><div class="key-val" id="v0"></div></div>
@@ -92,72 +92,82 @@
 
     let allKeys = [], currentColumn = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // PROTEKSI LOGIN & REFRESH
+    // 1. CEK LOGIN & RECOVERY
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
-        
         document.getElementById('peserta-nama').innerText = "PESERTA: " + user.email.toUpperCase();
-        const mySess = localStorage.getItem("sesi_aktif");
 
-        // Cek Sesi (Agar tidak bentrok pas refresh)
+        // Anti-Joki (Refresh Friendly)
+        const mySess = localStorage.getItem("sesi_aktif");
         onValue(ref(db, 'active_sessions/' + user.uid), (snap) => {
             const data = snap.val();
             if (data && data.id_sesi !== mySess) {
-                alert("Login terdeteksi di perangkat lain!");
+                alert("Login di perangkat lain!");
                 signOut(auth).then(() => { localStorage.clear(); window.location.href = "index.html"; });
             }
         });
 
-        // RECOVERY DATA (Jika Refresh)
-        const savedCol = localStorage.getItem("rec_col");
-        const savedStats = localStorage.getItem("rec_stats");
-        if(savedCol && savedStats) {
+        // LOAD DATA RECOVERY
+        const savedKeys = localStorage.getItem("saved_all_keys");
+        const savedCol = localStorage.getItem("saved_col");
+        const savedStats = localStorage.getItem("saved_stats");
+
+        if(savedKeys && savedCol && savedStats) {
+            allKeys = JSON.parse(savedKeys);
             currentColumn = parseInt(savedCol);
             stats = JSON.parse(savedStats);
-            mulaiUjian();
+            showScreen('screen-game');
+            jalankanKolom();
         }
     });
 
-    // Generate Input Fields
-    const examples = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
+    // Generate Inputs
+    const defaultVal = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
     for(let i=0; i<10; i++) {
-        document.getElementById('input-fields').innerHTML += `<div class="input-group"><label>K${i+1}</label><input type="text" id="in-${i}" maxlength="5" placeholder="${examples[i]}"></div>`;
+        document.getElementById('input-fields').innerHTML += `<div class="input-group"><label>K${i+1}</label><input type="text" id="in-${i}" maxlength="5" placeholder="${defaultVal[i]}"></div>`;
     }
 
-    window.mulaiUjian = () => {
-        allKeys = [];
-        for(let i=0; i<10; i++) {
-            let val = document.getElementById(`in-${i}`).value.toUpperCase() || examples[i];
-            allKeys.push(val.split(''));
+    window.mulaiUjian = (isNew = false) => {
+        if(isNew) {
+            allKeys = [];
+            for(let i=0; i<10; i++) {
+                let val = document.getElementById(`in-${i}`).value.toUpperCase() || defaultVal[i];
+                allKeys.push(val.split(''));
+            }
+            localStorage.setItem("saved_all_keys", JSON.stringify(allKeys));
         }
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-game').classList.add('active');
+        showScreen('screen-game');
         jalankanKolom();
     };
 
     function jalankanKolom() {
         b = 0; s = 0;
         document.getElementById('live-b').innerText = 0;
+        document.getElementById('live-s').innerText = 0;
         document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
-        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = allKeys[currentColumn][i];
         
-        // Simpan progres ke browser (Auto-save)
-        localStorage.setItem("rec_col", currentColumn);
-        localStorage.setItem("rec_stats", JSON.stringify(stats));
+        const currentKeys = allKeys[currentColumn];
+        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = currentKeys[i];
         
+        // Simpan Progres agar refresh tidak hilang
+        localStorage.setItem("saved_col", currentColumn);
+        localStorage.setItem("saved_stats", JSON.stringify(stats));
+
         buatSoal();
         mulaiTimer();
     }
 
     function buatSoal() {
         correctIdx = Math.floor(Math.random() * 5);
-        let q = allKeys[currentColumn].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
+        let currentKeys = allKeys[currentColumn];
+        let q = currentKeys.filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
         document.getElementById('question').innerText = q.join('');
     }
 
     window.jawab = (idx) => {
         if(idx === correctIdx) b++; else s++;
         document.getElementById('live-b').innerText = b;
+        document.getElementById('live-s').innerText = s;
         buatSoal();
     };
 
@@ -171,22 +181,24 @@
                 clearInterval(timerId);
                 stats.push({ col: currentColumn+1, b: b, s: s, t: b+s });
                 currentColumn++;
-                if(currentColumn < 10) { alert("Lanjut Kolom " + (currentColumn + 1)); jalankanKolom(); }
+                if(currentColumn < 10) { alert("Kolom Selesai! Klik OK Lanjut Kolom Berikutnya."); jalankanKolom(); }
                 else { selesai(); }
             }
         }, 1000);
     }
 
     function selesai() {
-        localStorage.removeItem("rec_col"); localStorage.removeItem("rec_stats");
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-result').classList.add('active');
+        // Hapus memori recovery karena sudah tamat
+        localStorage.removeItem("saved_col");
+        localStorage.removeItem("saved_stats");
+        localStorage.removeItem("saved_all_keys");
 
+        showScreen('screen-result');
         const bList = stats.map(d => d.b);
         const totalB = bList.reduce((x, y) => x + y, 0);
         const totalT = stats.reduce((x, y) => x + y.t, 0);
 
-        // Rumus Skor Akustik
+        // Rumus Akustik
         let panker = totalT / 10;
         let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
         let janker = Math.max(0, 100 - ((Math.max(...bList) - Math.min(...bList)) * 4));
@@ -195,19 +207,18 @@
 
         document.getElementById('res-total').innerText = skorFinal.toFixed(1);
 
-        // Kirim Data Skor ke Firebase (Database)
+        // Kirim ke Firebase
         const user = auth.currentUser;
         if(user) {
             push(ref(db, 'rekap_skor'), {
                 email: user.email,
                 skor: skorFinal.toFixed(1),
-                tanggal: new Date().toLocaleDateString('id-ID'),
-                jam: new Date().toLocaleTimeString('id-ID')
+                waktu: new Date().toLocaleString()
             });
         }
 
-        let h = `<table><tr><th>Kolom</th><th>Benar</th><th>Salah</th></tr>`;
-        stats.forEach(d => { h += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td></tr>`; });
+        let h = `<table><tr><th>Kolom</th><th>B</th><th>S</th><th>Total</th></tr>`;
+        stats.forEach(d => { h += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.t}</td></tr>`; });
         document.getElementById('res-table').innerHTML = h + `</table>`;
 
         new Chart(document.getElementById('myChart'), {
@@ -217,7 +228,17 @@
         });
     }
 
-    window.resetLengkap = () => { localStorage.clear(); location.reload(); };
+    window.resetLengkap = () => { 
+        localStorage.removeItem("saved_col");
+        localStorage.removeItem("saved_stats");
+        localStorage.removeItem("saved_all_keys");
+        location.reload(); 
+    };
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
 
     window.addEventListener('keydown', (e) => {
         const m = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
