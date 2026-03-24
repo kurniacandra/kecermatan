@@ -6,9 +6,8 @@
     <title>Simulasi Kecermatan - KurniaCandra</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS tetap sama seperti kode kamu */
         :root { --primary: #2c3e50; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --light: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--light); margin: 0; padding: 20px; display: flex; justify-content: center; user-select: none; }
         .container { background: white; width: 100%; max-width: 850px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 4px solid var(--accent); }
         .header h1 { margin: 0; font-size: 1.4rem; }
@@ -24,22 +23,18 @@
         .key-box { border: 2px solid #333; border-radius: 6px; overflow: hidden; }
         .key-head { background: #333; color: white; padding: 4px; font-weight: bold; }
         .key-val { font-size: 1.8rem; padding: 12px; font-weight: bold; background: #fff; }
-        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; user-select: none; }
+        #question { font-size: 4.5rem; font-weight: 900; letter-spacing: 25px; margin: 45px 0; color: #000; }
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-ans { padding: 18px; font-size: 1.6rem; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-ans:active { transform: scale(0.95); background: var(--accent); }
         .total-score-box { background: var(--primary); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .total-score-box h2 { margin: 0; font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; }
         .total-score-box div { font-size: 2.5rem; font-weight: 900; color: var(--accent); }
         .aspek-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
         .aspek-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-bottom: 4px solid var(--primary); text-align: left; }
-        .aspek-card h4 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
-        .aspek-card div { font-size: 1.5rem; font-weight: bold; color: var(--primary); margin: 5px 0; }
         .kat-text { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f2f2f2; }
         .credit-footer { background: #f9f9f9; color: #666; padding: 15px; text-align: center; font-size: 0.85rem; border-top: 1px solid #eee; }
-        .ig-link { color: var(--primary); font-weight: bold; text-decoration: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -78,32 +73,30 @@
 
     <div id="screen-result" class="screen">
         <div class="total-score-box">
-            <h2>Nilai Akhir Kecermatan</h2>
+            <h2 style="font-size: 0.9rem; margin:0; opacity:0.8;">NILAI AKHIR KECERMATAN</h2>
             <div id="res-total">0</div>
         </div>
         <div class="aspek-container">
-            <div class="aspek-card"><h4>Kecepatan Kerja</h4><div id="res-panker">0</div><span id="kat-panker"></span></div>
-            <div class="aspek-card"><h4>Ketelitian Kerja</h4><div id="res-tianker">0</div><span id="kat-tianker"></span></div>
-            <div class="aspek-card"><h4>Keajegan Kerja</h4><div id="res-janker">0</div><span id="kat-janker"></span></div>
-            <div class="aspek-card"><h4>Ketahanan Kerja</h4><div id="res-hanker">0</div><span id="kat-hanker"></span></div>
+            <div class="aspek-card"><h4>Kecepatan</h4><div id="res-panker">0</div><span id="kat-panker"></span></div>
+            <div class="aspek-card"><h4>Ketelitian</h4><div id="res-tianker">0</div><span id="kat-tianker"></span></div>
+            <div class="aspek-card"><h4>Keajegan</h4><div id="res-janker">0</div><span id="kat-janker"></span></div>
+            <div class="aspek-card"><h4>Ketahanan</h4><div id="res-hanker">0</div><span id="kat-hanker"></span></div>
         </div>
         <div id="final-table"></div>
-        <div style="height: 300px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="resetTest()">ULANGI TES</button>
+        <div style="height: 250px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
+        <button class="btn-ans" style="background:var(--success); margin-top:20px; font-size:1.1rem;" onclick="location.reload()">ULANGI TES</button>
     </div>
 
     <div class="credit-footer">
-        Aplikasi Simulasi &copy; 2026 | 
-        <a href="https://www.instagram.com/kurniacandraa_/" target="_blank" class="ig-link">Credit by KurniaCandra</a>
+        Aplikasi Simulasi &copy; 2026 | Credit by KurniaCandra
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // PASTI-KAN CONFIG INI SESUAI DENGAN PROJECT FIREBASE KAMU
     const firebaseConfig = {
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw",
         authDomain: "simulasi-2b93b.firebaseapp.com",
@@ -117,37 +110,140 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // SATPAM FIREBASE (Anti-Tabrakan & Proteksi Halaman)
+    // --- PROTEKSI LOGIN ---
     onAuthStateChanged(auth, (user) => {
         if (!user) {
-            // Jika belum login, tendang ke login
             window.location.href = "index.html";
         } else {
-            const mySess = localStorage.getItem("mySessionId");
-            const sessionRef = ref(db, 'sessions/' + user.uid);
-            
-            onValue(sessionRef, (snapshot) => {
+            const mySess = localStorage.getItem("sesi_saya");
+            onValue(ref(db, 'active_sessions/' + user.uid), (snapshot) => {
                 const data = snapshot.val();
-                // Jika ID Sesi di database tidak cocok dengan di browser ini, artinya ada login baru di tempat lain
-                if (data && data.activeSession !== mySess) {
-                    alert("Akun login di perangkat lain! Sesi berakhir.");
+                if (data && data.id_sesi !== mySess) {
+                    alert("Akun login di HP lain!");
                     signOut(auth).then(() => { window.location.href = "index.html"; });
                 }
             });
         }
     });
 
-    // LOGIKA GAME (Score, Timer, dll)
-    const TOTAL_COL = 10, TIME_LIMIT = 60; 
+    // --- LOGIKA GAME ---
+    const TOTAL_COL = 10, TIME_LIMIT = 60;
     let allColumnKeys = [], currentColumn = 0, scoreCorrect = 0, scoreWrong = 0, statsData = [], timerId, currentCorrectIdx = -1, myChart;
 
-    // ... sisanya sama seperti logika game kamu ...
-    // (Tambahkan fungsi validateAndStart, runColumn, hit, finish, dll di sini)
-    // Pastikan fungsi global diikat ke 'window' agar bisa dipanggil dari HTML:
-    window.validateAndStart = () => { /* isi fungsi */ };
-    window.hit = (idx) => { /* isi fungsi */ };
-    window.resetTest = () => { /* isi fungsi */ };
-</script>
+    const examples = ["ABCDE", "12345", "QWERT", "@#$%&", "ASDFG", "67890", "ZXCVB", "!*()+", "MNBVC", "YUIOP"];
+    const inputArea = document.getElementById('input-fields');
+    for(let i=0; i < TOTAL_COL; i++) {
+        inputArea.innerHTML += `<div class="input-group"><label>K-${i+1}</label><input type="text" id="input-${i}" maxlength="5" placeholder="${examples[i]}"></div>`;
+    }
 
+    window.validateAndStart = () => {
+        allColumnKeys = [];
+        for(let i=0; i < TOTAL_COL; i++) {
+            let inputEl = document.getElementById(`input-${i}`);
+            let val = inputEl.value.replace(/\s/g, '').toUpperCase() || inputEl.getAttribute('placeholder');
+            if(val.length !== 5) return alert(`Lengkapi Kolom ${i+1}!`);
+            allColumnKeys.push(val.split(''));
+        }
+        showScreen('screen-game');
+        runColumn();
+    };
+
+    function runColumn() {
+        scoreCorrect = 0; scoreWrong = 0;
+        document.getElementById('live-b').innerText = 0;
+        document.getElementById('live-s').innerText = 0;
+        document.getElementById('col-info').innerText = `KOLOM ${currentColumn + 1}`;
+        let keys = allColumnKeys[currentColumn];
+        for(let i=0; i<5; i++) document.getElementById('v'+i).innerText = keys[i];
+        newQuestion(); startTimer();
+    }
+
+    function newQuestion() {
+        currentCorrectIdx = Math.floor(Math.random() * 5);
+        let keys = allColumnKeys[currentColumn];
+        let q = keys.filter((_, idx) => idx !== currentCorrectIdx).sort(() => 0.5 - Math.random());
+        document.getElementById('question').innerText = q.join('');
+    }
+
+    window.hit = (idx) => {
+        if(idx === currentCorrectIdx) scoreCorrect++; else scoreWrong++;
+        document.getElementById('live-b').innerText = scoreCorrect;
+        document.getElementById('live-s').innerText = scoreWrong;
+        newQuestion();
+    };
+
+    function startTimer() {
+        let left = TIME_LIMIT;
+        document.getElementById('timer').innerText = left;
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            left--; document.getElementById('timer').innerText = left;
+            if(left <= 0) {
+                clearInterval(timerId);
+                statsData.push({ col: currentColumn+1, b: scoreCorrect, s: scoreWrong, total: scoreCorrect + scoreWrong });
+                currentColumn++;
+                if(currentColumn < TOTAL_COL) {
+                    alert("Lanjut Kolom " + (currentColumn + 1));
+                    runColumn();
+                } else {
+                    finish();
+                }
+            }
+        }, 1000);
+    }
+
+    function finish() {
+        showScreen('screen-result');
+        const bList = statsData.map(d => d.b);
+        const totalB = bList.reduce((a, b) => a + b, 0);
+        const totalT = statsData.reduce((a, b) => a + b.total, 0);
+
+        let panker = totalT / TOTAL_COL;
+        let tianker = totalT > 0 ? (totalB / totalT) * 100 : 0;
+        let deviasi = Math.max(...bList) - Math.min(...bList);
+        let janker = Math.max(0, 100 - (deviasi * 4));
+        let hanker = (bList[7] + bList[8] + bList[9]) / 3 * 2;
+        let nAkustik = (Math.min(panker*1.8, 100) * 0.3) + (tianker * 0.4) + (janker * 0.15) + (Math.min(hanker*1.8, 100) * 0.15);
+
+        document.getElementById('res-total').innerText = nAkustik.toFixed(1);
+        document.getElementById('res-panker').innerText = panker.toFixed(1);
+        document.getElementById('res-tianker').innerText = tianker.toFixed(1) + "%";
+        document.getElementById('res-janker').innerText = janker.toFixed(0);
+        document.getElementById('res-hanker').innerText = hanker.toFixed(0);
+
+        // Kirim hasil ke Firebase
+        const user = auth.currentUser;
+        if(user) {
+            push(ref(db, 'rekap_skor'), {
+                email: user.email,
+                skor: nAkustik.toFixed(1),
+                waktu: new Date().toLocaleString()
+            });
+        }
+
+        let html = `<table><tr><th>Kolom</th><th>B</th><th>S</th><th>Total</th></tr>`;
+        statsData.forEach(d => { html += `<tr><td>${d.col}</td><td>${d.b}</td><td>${d.s}</td><td>${d.total}</td></tr>`; });
+        document.getElementById('final-table').innerHTML = html + `</table>`;
+
+        new Chart(document.getElementById('myChart'), {
+            type: 'line',
+            data: {
+                labels: statsData.map(d => "K" + d.col),
+                datasets: [{ label: 'Benar', data: bList, borderColor: '#27ae60', tension: 0.1 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    window.addEventListener('keydown', (e) => {
+        const map = { 'a':0, 'b':1, 'c':2, 'd':3, 'e':4 };
+        if(map[e.key.toLowerCase()] !== undefined) window.hit(map[e.key.toLowerCase()]);
+    });
+</script>
 </body>
 </html>
