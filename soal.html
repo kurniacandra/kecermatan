@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN v11.0 - Final Build</title>
+    <title>CAT KECERMATAN v12.0 - Debug Ready</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -13,15 +13,15 @@
         .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
         
-        /* STYLE INPUT SETUP */
+        /* SETUP INPUT */
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
         .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; transition: 0.3s; }
         .input-group.error { border: 2px solid var(--danger); background: #fff0f0; }
         input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; outline: none; background: transparent; text-transform: uppercase; letter-spacing: 2px; }
-        .error-msg { color: var(--danger); font-size: 0.65rem; display: none; font-weight: bold; margin-top: 5px; }
+        .error-msg { color: var(--danger); font-size: 0.6rem; display: none; font-weight: bold; margin-top: 5px; line-height: 1.2; }
         .input-group.error .error-msg { display: block; }
 
-        /* STYLE GAMEPLAY */
+        /* GAMEPLAY */
         .stats-bar { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; }
         .timer { font-size: 3rem; font-weight: 800; color: var(--danger); }
         .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
@@ -32,7 +32,6 @@
         .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
         
-        /* STYLE JEDA */
         .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .jeda-box { background: white; padding: 40px; border-radius: 20px; text-align: center; border-bottom: 8px solid var(--accent); min-width: 320px; }
         .jeda-timer { font-size: 6rem; font-weight: 900; color: var(--danger); margin: 10px 0; }
@@ -49,7 +48,7 @@
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Isi 5 karakter unik per kolom. Klik "ISI OTOMATIS" jika ingin cepat.</p>
+        <p style="font-size: 0.8rem; color: #666;">Silakan isi 10 kolom kunci di bawah ini.</p>
         <div class="setup-grid" id="input-fields"></div>
         <div style="display:flex; gap:10px;">
             <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; border:1px solid #ccc; background:#eee;">ISI OTOMATIS</button>
@@ -78,23 +77,21 @@
     </div>
 
     <div id="screen-result" class="screen">
-        <h3 style="margin:0">HASIL PENILAIAN AKHIR</h3>
+        <h3 style="margin:0">HASIL PENILAIAN</h3>
         <div class="final-score-box">
             <h1 style="font-size: 4.5rem; margin:0;" id="res-total">0</h1>
             <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
         </div>
         <div id="rekap-tabel" style="overflow-x:auto;"></div>
         <div style="height: 180px;"><canvas id="mainChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">ULANGI SIMULASI</button>
+        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px; margin-top:20px;" onclick="window.ulang()">ULANGI</button>
     </div>
 </div>
 
 <div id="popup-jeda" class="overlay-jeda">
     <div class="jeda-box">
-        <h2 style="margin:0; color:#333;">KOLOM SELESAI</h2>
-        <p style="color:#666;">Persiapan kolom berikutnya dalam:</p>
+        <h2 style="margin:0;">KOLOM SELESAI</h2>
         <div id="jeda-countdown" class="jeda-timer">5</div>
-        <p style="font-weight:bold; color:var(--primary);">SIAPKAN JARI ANDA!</p>
     </div>
 </div>
 
@@ -110,7 +107,7 @@
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // VALIDASI INPUT (CEK DUPLIKAT DI DALAM 1 KOLOM)
+    // VALIDASI INPUT (PESAN ERROR KHUSUS)
     function validate(input, group) {
         const val = input.value.toUpperCase();
         const isDuplicate = new Set(val).size !== val.length;
@@ -121,22 +118,22 @@
         }
     }
 
-    // GENERATE 10 INPUT FIELDS
+    // BUILD INPUTS
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
         div.className = 'input-group'; div.id = `g-${i}`;
-        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> <div class="error-msg">Ada huruf ganda!</div>`;
+        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE"> 
+        <div class="error-msg">Wajib 5 Karakter Unik!<br>(Tidak Boleh Huruf Ganda)</div>`;
         inputArea.appendChild(div);
         const inp = div.querySelector('input');
         inp.addEventListener('input', () => validate(inp, div));
     }
 
-    // LOGIKA AUTOFILL (UNIK PER KOLOM)
+    // AUTOFILL (UNIK PER KOLOM)
     window.autoFill = () => {
         const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%&*!+=?[]{}<>";
         for(let i=0; i<10; i++) {
-            // Acak pool setiap kolom agar karakter bisa berulang antar kolom tapi tidak di kolom yang sama
             let currentPool = pool.split("").sort(() => Math.random() - 0.5);
             const chunk = currentPool.slice(0, 5).join("");
             const el = document.getElementById(`in-${i}`);
@@ -147,8 +144,6 @@
 
     onAuthStateChanged(auth, (user) => {
         if (!user) { window.location.href = "index.html"; return; }
-        
-        // ANTI JOKI
         let mySess = localStorage.getItem("sess_id") || "sess_" + Math.random().toString(36).substr(2, 9);
         localStorage.setItem("sess_id", mySess);
         onValue(ref(db, 'active_sessions/' + user.uid), (snap) => {
@@ -158,14 +153,6 @@
         });
         set(ref(db, 'active_sessions/' + user.uid), { id: mySess, email: user.email });
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
-        
-        // RECOVERY
-        if (localStorage.getItem("cat_keys")) {
-            allKeys = JSON.parse(localStorage.getItem("cat_keys"));
-            currentCol = parseInt(localStorage.getItem("cat_col"));
-            stats = JSON.parse(localStorage.getItem("cat_stats"));
-            showS('screen-game'); run();
-        }
     });
 
     window.mulai = () => {
@@ -175,8 +162,7 @@
             if(!validate(el, document.getElementById(`g-${i}`))) valid = false;
             allKeys.push(el.value.toUpperCase().split(''));
         }
-        if(!valid) { alert("Periksa kembali input yang berwarna merah!"); return; }
-        localStorage.setItem("cat_keys", JSON.stringify(allKeys));
+        if(!valid) { alert("Tiap kolom harus 5 karakter unik!"); return; }
         currentCol = 0; stats = []; showS('screen-game'); run();
     };
 
@@ -188,14 +174,11 @@
             h += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v">${k}</div></div>`;
         });
         document.getElementById('key-container').innerHTML = h;
-        localStorage.setItem("cat_col", currentCol);
-        localStorage.setItem("cat_stats", JSON.stringify(stats));
         makeQ(); startT();
     }
 
     function makeQ() {
         correctIdx = Math.floor(Math.random() * 5);
-        // Ambil 4 karakter dari kunci kolom aktif (karakter ke-5 adalah jawaban)
         let qArray = allKeys[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
         document.getElementById('question').innerText = qArray.join('');
     }
@@ -222,13 +205,12 @@
     }
 
     function finish() {
-        localStorage.clear(); showS('screen-result');
+        showS('screen-result');
         const bList = stats.map(d => d.b);
         const totB = bList.reduce((a,x) => a+x, 0);
         const totS = stats.reduce((a,x) => a+x.s, 0);
         const totT = totB + totS;
 
-        // PERHITUNGAN ASPEK
         let panker = totT / 10;
         let tianker = totT > 0 ? (totB / totT) * 100 : 0;
         let janker = 100 - ((Math.max(...bList) - Math.min(...bList)) * 5);
@@ -237,33 +219,32 @@
 
         document.getElementById('res-total').innerText = final.toFixed(1);
         document.getElementById('aspek-list').innerHTML = `
-            <div style="background:#eee;padding:5px">Panker (Kecepatan): ${panker.toFixed(1)}</div>
-            <div style="background:#eee;padding:5px">Tianker (Ketelitian): ${tianker.toFixed(1)}%</div>
-            <div style="background:#eee;padding:5px">Janker (Kestabilan): ${Math.max(0,janker).toFixed(1)}</div>
-            <div style="background:#eee;padding:5px">Hanker (Ketahanan): ${Math.min(hanker,100).toFixed(1)}</div>
+            <div style="background:#eee;padding:5px">Kecepatan: ${panker.toFixed(1)}</div>
+            <div style="background:#eee;padding:5px">Ketelitian: ${tianker.toFixed(1)}%</div>
+            <div style="background:#eee;padding:5px">Kestabilan: ${Math.max(0,janker).toFixed(1)}</div>
+            <div style="background:#eee;padding:5px">Ketahanan: ${Math.min(hanker,100).toFixed(1)}</div>
         `;
 
         let h = "<table><tr><th>DATA</th>" + stats.map(d => `<th>K${d.col}</th>`).join('') + "</tr>";
-        h += "<tr><td>BENAR</td>" + bList.map(v => `<td>${v}</td>`).join('') + "</tr>";
-        h += "<tr><td>SALAH</td>" + stats.map(d => `<td>${d.s}</td>`).join('') + "</tr></table>";
+        h += "<tr><td>BENAR</td>" + bList.map(v => `<td>${v}</td>`).join('') + "</tr></table>";
         document.getElementById('rekap-tabel').innerHTML = h;
 
         new Chart(document.getElementById('mainChart'), {
-            type: 'line', data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Grafik Benar', data: bList, borderColor:'#27ae60', tension:0.3 }] }
+            type: 'line', data: { labels: stats.map(d => "K"+d.col), datasets: [{ label:'Benar', data: bList, borderColor:'#27ae60', tension:0.3 }] }
         });
         push(ref(db, 'rekap_skor'), { nama: auth.currentUser.email, skor: final.toFixed(1), waktu: new Date().toLocaleString() });
     }
 
-    window.ulang = () => { localStorage.clear(); location.reload(); };
+    window.ulang = () => { location.reload(); };
     function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     window.addEventListener('keydown', (e) => { const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); });
-</script>
-</body>
-</html>
-// TAMBAHKAN INI DI BARIS PALING BAWAH (DI DALAM SCRIPT MODULE)
+
+    // DEBUG EXPORT (Agar Console bisa akses)
     window.stats = stats;
     window.currentCol = currentCol;
-    window.allKeys = allKeys;
     window.run = run;
     window.finish = finish;
     window.showS = showS;
+</script>
+</body>
+</html>
