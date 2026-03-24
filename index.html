@@ -3,27 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem CAT - Login</title>
+    <title>Login CAT Kecermatan</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #fff; }
-        .login-card { background: #16213e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center; border: 1px solid #0f3460; position: relative; }
-        .login-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: #e94560; border-radius: 15px 15px 0 0; }
-        h2 { margin-bottom: 10px; color: #e94560; text-transform: uppercase; letter-spacing: 2px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; background: #0f3460; color: #fff; font-size: 16px; outline: none; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 15px; }
-        button:hover { background: #950740; transform: translateY(-2px); }
-        #error-msg { color: #ff4d4d; font-size: 12px; margin-top: 15px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 40px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h2 { color: #2c3e50; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        button:hover { background: #219150; }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <h2>Sistem CAT</h2>
-    <p style="color:#95a5a6; font-size:13px;">Portal Simulasi Kecermatan Polri</p>
-    <input type="email" id="u_email" placeholder="Email Peserta">
-    <input type="password" id="u_pass" placeholder="Password">
-    <button id="btn_mulai">MULAI UJIAN</button>
-    <div id="error-msg"></div>
+<div class="login-box">
+    <h2>CAT LOGIN</h2>
+    <input type="email" id="email" placeholder="Email Peserta">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="prosesLogin()">MASUK KE UJIAN</button>
 </div>
 
 <script type="module">
@@ -44,34 +40,30 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    document.getElementById("btn_mulai").onclick = async () => {
-        const email = document.getElementById("u_email").value;
-        const pass = document.getElementById("u_pass").value;
-        const msg = document.getElementById("error-msg");
+    window.prosesLogin = () => {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            const user = userCredential.user;
-
-            // BUAT SESSION ID UNIK (Misal: jam saat ini)
-            const sessionId = Date.now().toString();
-            
-            // SIMPAN SESI KE DATABASE (Hanya boleh ada 1 sesi per User UID)
-            await set(ref(db, 'active_sessions/' + user.uid), {
-                id_sesi: sessionId,
-                login_at: new Date().toLocaleString()
+        signInWithEmailAndPassword(auth, email, pass)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                const sessionId = Date.now().toString(); // Buat ID Sesi Unik
+                
+                // Simpan ID Sesi di browser
+                localStorage.setItem("sesi_aktif", sessionId);
+                
+                // Kirim ID Sesi ke Database (Tanda bahwa akun ini sedang aktif)
+                set(ref(db, 'active_sessions/' + user.uid), {
+                    id_sesi: sessionId,
+                    email: user.email,
+                    waktu_login: new Date().toLocaleString()
+                }).then(() => {
+                    window.location.href = "soal.html";
+                });
+            })
+            .catch((error) => {
+                alert("Gagal Login! Cek Email/Password atau aktifkan koneksi internet.");
             });
-
-            // SIMPAN KE LOCALSTORAGE PESERTA
-            localStorage.setItem("sesi_saya", sessionId);
-
-            msg.style.color = "#27ae60";
-            msg.innerText = "Berhasil! Masuk ke soal...";
-            setTimeout(() => { window.location.href = "soal.html"; }, 800);
-
-        } catch (error) {
-            msg.innerText = "Akses Ditolak: Akun tidak valid!";
-        }
     };
 </script>
 </body>
