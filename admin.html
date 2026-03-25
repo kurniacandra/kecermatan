@@ -5,22 +5,20 @@
     <title>MONITORING HASIL - CAT</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; }
+        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 20px; border-left: 5px solid var(--accent); }
-        .info { flex: 1; border-right: 1px solid #eee; padding-right: 15px; }
-        .chart-container { flex: 2; height: 200px; min-width: 300px; }
-        h3 { margin: 0; color: var(--primary); font-size: 1.2rem; }
-        .skor-tag { font-size: 2.5rem; font-weight: 800; color: var(--primary); margin: 10px 0; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; }
-        .badge { background: #eee; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 20px; border-left: 8px solid var(--primary); }
+        .info { flex: 1; min-width: 250px; border-right: 1px solid #eee; }
+        .chart-container { flex: 2; min-width: 300px; height: 250px; }
+        .skor-besar { font-size: 3rem; font-weight: 850; color: var(--primary); margin: 5px 0; }
+        .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .badge { background: #f8f9fa; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; border: 1px solid #eee; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>MONITORING REAL-TIME</h2>
-        <div id="admin-list">Memuat data peserta...</div>
+    <div style="max-width: 1100px; margin: auto;">
+        <h2 style="text-align: center; color: var(--primary);">MONITORING HASIL UJIAN</h2>
+        <div id="admin-display">Memuat riwayat peserta...</div>
     </div>
 
 <script type="module">
@@ -32,7 +30,6 @@
         authDomain: "simulasi-2b93b.firebaseapp.com", 
         databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", 
         projectId: "simulasi-2b93b", 
-        storageBucket: "simulasi-2b93b.firebasestorage.app", 
         appId: "1:562508858666:web:fa63f71ec175c675e64a53" 
     };
 
@@ -40,54 +37,66 @@
     const db = getDatabase(app);
 
     onValue(ref(db, 'rekap_skor'), (snap) => {
-        const list = document.getElementById('admin-list');
-        list.innerHTML = "";
-        let entries = [];
-        
-        snap.forEach(child => { entries.push({ id: child.key, ...child.val() }); });
-        entries.reverse(); // Terbaru di atas
+        const container = document.getElementById('admin-display');
+        container.innerHTML = "";
+        let dataArray = [];
 
-        entries.forEach((item, index) => {
+        snap.forEach(child => { dataArray.push({ id: child.key, ...child.val() }); });
+        
+        // Membalik urutan agar yang terbaru muncul paling atas (RIWAYAT)
+        dataArray.reverse().forEach((item, index) => {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
                 <div class="info">
-                    <small style="color:gray">${item.waktu || 'Waktu tidak tercatat'}</small>
-                    <h3>${item.nama ? item.nama.split('@')[0].toUpperCase() : 'ANONIM'}</h3>
-                    <div class="skor-tag">${item.skor || 0}</div>
-                    <div class="stats-grid">
-                        <div>Kec: <span class="badge">${item.kecepatan || 0}</span></div>
-                        <div>Tel: <span class="badge">${item.ketelitian || 0}%</span></div>
-                        <div>Stab: <span class="badge">${item.kestabilan || 0}</span></div>
-                        <div>Than: <span class="badge">${item.ketahanan || 0}</span></div>
+                    <div style="color: #888; font-size: 0.8rem;">${item.waktu || '---'}</div>
+                    <h3 style="margin: 5px 0;">${item.nama ? item.nama.split('@')[0].toUpperCase() : 'USER'}</h3>
+                    <div class="skor-besar">${item.skor || 0}</div>
+                    <div class="badge-grid">
+                        <div class="badge">Kecepatan: ${item.kecepatan || 0}</div>
+                        <div class="badge">Ketelitian: ${item.ketelitian || 0}%</div>
+                        <div class="badge">Kestabilan: ${item.kestabilan || 0}</div>
+                        <div class="badge">Ketahanan: ${item.ketahanan || 0}</div>
                     </div>
                 </div>
                 <div class="chart-container">
-                    <canvas id="chart-${index}"></canvas>
+                    <canvas id="canvas-${index}"></canvas>
                 </div>
             `;
-            list.appendChild(card);
+            container.appendChild(card);
 
-            if (item.pola) {
-                new Chart(document.getElementById(`chart-${index}`), {
+            // Tampilkan grafik jika data pola ada
+            if (item.pola_benar) {
+                new Chart(document.getElementById(`canvas-${index}`), {
                     type: 'line',
                     data: {
                         labels: ["K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8", "K9", "K10"],
-                        datasets: [{
-                            label: 'Benar',
-                            data: item.pola,
-                            borderColor: '#27ae60',
-                            backgroundColor: 'rgba(39,174,96,0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4
-                        }]
+                        datasets: [
+                            {
+                                label: 'Benar',
+                                data: item.pola_benar,
+                                borderColor: '#27ae60',
+                                backgroundColor: 'rgba(39,174,96,0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Salah',
+                                data: item.pola_salah || [],
+                                borderColor: '#f39c12',
+                                backgroundColor: 'rgba(243,156,18,0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, grid: { display: false } } }
+                        interaction: { mode: 'index', intersect: false },
+                        scales: { y: { beginAtZero: true } }
                     }
                 });
             }
