@@ -176,6 +176,7 @@
         initSecurity(user);
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
         loadLeaderboard();
+        loadUserHistory(); // BARIS PENTING: Memuat riwayat segera saat login
         checkProgress();
     });
 
@@ -261,7 +262,7 @@
     window.jawab = (idx) => { if(!isPaused) { (idx === correctIdx) ? b++ : s++; makeQ(); } };
 
     function startT() {
-        let t = 1; document.getElementById('timer').innerText = t;
+        let t = 60; document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
             t--; document.getElementById('timer').innerText = t;
@@ -319,7 +320,7 @@
             kestabilan: Math.max(0,janker).toFixed(1),
             ketahanan: Math.min(hanker,100).toFixed(1)
         }).then(() => {
-            loadUserHistory(); // Memuat tabel riwayat segera setelah data terkirim
+            loadUserHistory(); 
         });
     }
 
