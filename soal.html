@@ -312,19 +312,16 @@
             options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
         });
 
-        push(ref(db, 'rekap_skor'), { nama: auth.currentUser.email, skor: parseFloat(final.toFixed(1)), waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID') });
-        loadMyHistory();
-    }
-
-    function loadMyHistory() {
-        const hQuery = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(auth.currentUser.email));
-        onValue(hQuery, (snap) => {
-            let html = ""; const data = snap.val();
-            if(data) {
-                Object.values(data).reverse().slice(0, 5).forEach(item => { html += `<tr><td>${item.waktu}</td><td><span style="color:var(--success)">${item.skor}</span></td></tr>`; });
-            } else { html = "<tr><td colspan='2'>Belum ada riwayat.</td></tr>"; }
-            document.getElementById('history-body').innerHTML = html;
-        });
+        push(ref(db, 'rekap_skor'), { 
+    nama: auth.currentUser.email, 
+    skor: parseFloat(final.toFixed(1)), 
+    waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID'),
+    pola: bList, // Ini yang bikin grafik muncul di Admin
+    kecepatan: panker.toFixed(1),
+    ketelitian: tianker.toFixed(1),
+    kestabilan: Math.max(0,janker).toFixed(1),
+    ketahanan: Math.min(hanker,100).toFixed(1)
+});
     }
 
     window.resetUjian = () => { resetStorage(false); location.reload(); };
