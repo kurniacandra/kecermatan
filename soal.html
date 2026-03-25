@@ -261,7 +261,7 @@
     window.jawab = (idx) => { if(!isPaused) { (idx === correctIdx) ? b++ : s++; makeQ(); } };
 
     function startT() {
-        let t = 60; document.getElementById('timer').innerText = t;
+        let t = 1; document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
             t--; document.getElementById('timer').innerText = t;
