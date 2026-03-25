@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - History Peserta</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #1a252f; --accent: #f39c12; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); border-left: 5px solid var(--accent); padding-left: 15px; }
+        
+        .card-history { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
+        .info-user { border-right: 1px solid #eee; padding-right: 15px; }
+        .info-user h3 { margin: 0; color: #2980b9; font-size: 1.1rem; }
+        .badge-skor { font-size: 1.5rem; font-weight: bold; color: var(--accent); display: block; margin: 5px 0; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.8rem; color: #555; }
+        
+        .chart-container { height: 180px; position: relative; }
+        .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); display:flex; justify-content:center; align-items:center; z-index:9999; color:white; }
+        
+        @media (max-width: 768px) { .card-history { grid-template-columns: 1fr; } .info-user { border-right: none; border-bottom: 1px solid #eee; padding-bottom: 15px; } }
+    </style>
+</head>
+<body>
+
+<div id="admin-auth" class="login-overlay">
+    <div style="text-align:center">
+        <h3>PIN ADMIN</h3>
+        <input type="password" id="admin-pin" style="padding:10px; border-radius:5px; border:none; text-align:center; font-size:1.2rem;">
+        <br><br>
+        <button onclick="checkPin()" style="padding:10px 25px; background:var(--accent); border:none; border-radius:5px; cursor:pointer; font-weight:bold;">MASUK</button>
+    </div>
+</div>
+
+<div class="container" id="main-content" style="display:none;">
+    <h2>MONITORING HASIL PESERTA</h2>
+    <p id="loading-msg">Memuat riwayat terbaru...</p>
+    <div id="history-list"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", 
+        authDomain: "simulasi-2b93b.firebaseapp.com", 
+        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", 
+        projectId: "simulasi-2b93b", 
+        storageBucket: "simulasi-2b93b.firebasestorage.app", 
+        appId: "1:562508858666:web:fa63f71ec175c675e64a53" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // PIN KEAMANAN SEDERHANA
+    window.checkPin = () => {
+        const pin = document.getElementById('admin-pin').value;
+        if(pin === "1234") { // GANTI PIN INI SESUAI KEINGINAN
+            document.getElementById('admin-auth').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            loadAllHistory();
+        } else {
+            alert("PIN SALAH!");
+        }
+    };
+
+    function loadAllHistory() {
+        const hRef = ref(db, 'rekap_skor');
+        onValue(hRef, (snap) => {
+            const listContainer = document.getElementById('history-list');
+            listContainer.innerHTML = "";
+            document.getElementById('loading-msg').style.display = 'none';
+
+            let rawData = [];
+            snap.forEach(child => {
+                rawData.push({ id: child.key, ...child.val() });
+            });
+
+            // Urutkan manual berdasarkan waktu terbaru ke lama
+            rawData.reverse().forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card-history';
+                
+                const userEmail = item.nama ? item.nama.toUpperCase() : "ANONIM";
+                
+                card.innerHTML = `
+                    <div class="info-user">
+                        <small style="color:#999">${item.waktu || '-'}</small>
+                        <h3>${userEmail}</h3>
+                        <span class="badge-skor">Skor: ${item.skor}</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-${idx}"></canvas>
+                    </div>
+                `;
+                
+                listContainer.appendChild(card);
+
+                // Render Grafik jika data grafik tersedia (opsional jika kamu simpan bList)
+                // Jika data bList tidak ada di rekap_skor, grafik akan kosong
+                if(item.pola) {
+                    new Chart(document.getElementById(`chart-${idx}`), {
+                        type: 'line',
+                        data: {
+                            labels: ["K1","K2","K3","K4","K5","K6","K7","K8","K9","K10"],
+                            datasets: [{
+                                label: 'Benar',
+                                data: item.pola,
+                                borderColor: '#27ae60',
+                                tension: 0.3,
+                                fill: false,
+                                pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true } }
+                        }
+                    });
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>
