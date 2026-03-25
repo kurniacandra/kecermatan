@@ -312,11 +312,13 @@
             options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
         });
 
-        push(ref(db, 'rekap_skor'), { 
+        // Bagian di dalam function finish() pada soal.html
+push(ref(db, 'rekap_skor'), { 
     nama: auth.currentUser.email, 
     skor: parseFloat(final.toFixed(1)), 
     waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID'),
-    pola: bList, // Ini yang bikin grafik muncul di Admin
+    pola_benar: bList, // Mengirim data Benar
+    pola_salah: sList, // Mengirim data Salah
     kecepatan: panker.toFixed(1),
     ketelitian: tianker.toFixed(1),
     kestabilan: Math.max(0,janker).toFixed(1),
