@@ -139,15 +139,36 @@
 
     // LEADERBOARD FUNCTION
     function loadLeaderboard() {
-        const lbQuery = query(ref(db, 'rekap_skor'), orderByChild('skor'), limitToLast(10));
+        // Ambil 20 data terakhir agar pencarian skor tertinggi lebih akurat
+        const lbQuery = query(ref(db, 'rekap_skor'), orderByChild('skor'), limitToLast(20));
+        
         onValue(lbQuery, (snap) => {
             let list = [];
-            snap.forEach(child => { list.push(child.val()); });
-            list.sort((x, y) => y.skor - x.skor);
-            let html = "";
-            list.slice(0, 5).forEach((item, index) => {
-                html += `<tr><td>${index + 1}</td><td>${item.nama.split('@')[0]}</td><td>${item.skor}</td></tr>`;
+            snap.forEach(child => { 
+                let data = child.val();
+                // PAKSA skor jadi angka agar bisa dihitung & ditampilkan
+                let skorAngka = parseFloat(data.skor) || 0;
+                list.push({
+                    nama: data.nama || "Anonim",
+                    skor: skorAngka
+                });
             });
+
+            // Urutkan dari skor tertinggi ke terendah
+            list.sort((x, y) => y.skor - x.skor);
+
+            let html = "";
+            // Ambil 5 teratas
+            list.slice(0, 5).forEach((item, index) => {
+                let namaUser = item.nama.split('@')[0].toUpperCase();
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="text-align:left; padding-left:15px;">${namaUser}</td>
+                        <td style="font-weight:bold; color:var(--success);">${item.skor.toFixed(1)}</td>
+                    </tr>`;
+            });
+            
             document.getElementById('leaderboard-body').innerHTML = html || "<tr><td colspan='3'>Belum ada data.</td></tr>";
         });
     }
