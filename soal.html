@@ -8,8 +8,13 @@
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; user-select: none; }
-        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
+        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; position: relative; }
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); position: relative; }
+        
+        /* Tombol Logout */
+        .btn-logout { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .btn-logout:hover { background: #c0392b; }
+
         .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
         
@@ -55,7 +60,10 @@
 <body oncontextmenu="return false;">
 
 <div class="container">
-    <div class="header"><h3 id="user-display" style="margin:0">MENGHUBUNGKAN...</h3></div>
+    <div class="header">
+        <h3 id="user-display" style="margin:0">MENGHUBUNGKAN...</h3>
+        <button class="btn-logout" id="btn-logout">LOGOUT</button>
+    </div>
 
     <div id="screen-setup" class="screen active">
         <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
@@ -128,6 +136,17 @@
     </div>
 </div>
 
+<div id="modal-detail-grafik" class="modal-riwayat">
+    <div class="modal-content" style="max-width: 550px; border-top: 8px solid #3498db;">
+        <h3 id="det-waktu" style="margin-top:0; color:#3498db; font-size:1rem;">DETAIL SESI</h3>
+        <div id="det-stats" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div>
+        <div style="height: 250px; background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px solid #eee;">
+            <canvas id="chartDetailLama"></canvas>
+        </div>
+        <button onclick="document.getElementById('modal-detail-grafik').style.display='none'" style="width:100%; margin-top:15px; padding:12px; border:none; background:#eee; border-radius:8px; font-weight:bold; cursor:pointer;">KEMBALI</button>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -139,7 +158,17 @@
     const db = getDatabase(app);
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
-    let dataSimbolRiwayat = []; // Simpan sementara data kunci dari riwayat
+    let dataSimbolRiwayat = [];
+    let chartDetailInstance = null;
+
+    // Fungsi Logout
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        if(confirm("Apakah Anda yakin ingin logout?")) {
+            signOut(auth).then(() => {
+                location.href = "index.html";
+            });
+        }
+    });
 
     function initSecurity(user) {
         const sid = Date.now().toString();
@@ -165,8 +194,6 @@
             let html = "";
             dataSimbolRiwayat = [];
             let counter = 0;
-            
-            // Kita kumpulkan dan balik urutannya agar yang terbaru di atas
             let records = [];
             snap.forEach(child => { records.push(child.val()); });
             records.reverse();
@@ -175,18 +202,51 @@
                 if(val.kunci_kolom) {
                     dataSimbolRiwayat[counter] = val.kunci_kolom;
                     html += `
-                    <div class="row-simbol">
-                        <div style="text-align:left">
-                            <div style="font-weight:bold; font-size:0.85rem">${val.waktu}</div>
-                            <div style="font-size:0.75rem; color:#666">K1: ${val.kunci_kolom[0].join('')} | K2: ${val.kunci_kolom[1].join('')}...</div>
+                    <div class="row-simbol" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight:bold; font-size:0.85rem">${val.waktu}</div>
+                                <div style="font-size:0.8rem; color:var(--success)">Skor: ${val.skor}</div>
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn-pilih" style="background:#3498db; font-size:0.75rem;" onclick='window.lihatDetailGrafik(${JSON.stringify(val)})'>📊 Detail</button>
+                                <button class="btn-pilih" style="font-size:0.75rem;" onclick="window.terapkanSimbolRiwayat(${counter})">Pilih</button>
+                            </div>
                         </div>
-                        <button class="btn-pilih" onclick="window.terapkanSimbolRiwayat(${counter})">Pilih</button>
+                        <div style="font-size:0.7rem; color:#888; background:#f9f9f9; padding:4px; width:100%; border-radius:4px;">
+                            K1: ${val.kunci_kolom[0].join('')} | K2: ${val.kunci_kolom[1].join('')}...
+                        </div>
                     </div>`;
                     counter++;
                 }
             });
             list.innerHTML = html || "<p style='text-align:center'>Belum ada riwayat kunci tersimpan.</p>";
         }, { onlyOnce: true });
+    };
+
+    window.lihatDetailGrafik = (data) => {
+        const modal = document.getElementById('modal-detail-grafik');
+        modal.style.display = 'flex';
+        document.getElementById('det-waktu').innerText = "RIWAYAT: " + data.waktu;
+        document.getElementById('det-stats').innerHTML = `
+            <div style="background:#e3f2fd; padding:10px; border-radius:8px; text-align:center;"><small>Kecepatan</small><br><b>${data.kecepatan}</b></div>
+            <div style="background:#e8f5e9; padding:10px; border-radius:8px; text-align:center;"><small>Ketelitian</small><br><b>${data.ketelitian}%</b></div>
+            <div style="background:#fff3e0; padding:10px; border-radius:8px; text-align:center;"><small>Kestabilan</small><br><b>${data.kestabilan}</b></div>
+            <div style="background:#fce4ec; padding:10px; border-radius:8px; text-align:center;"><small>Ketahanan</small><br><b>${data.ketahanan}</b></div>`;
+
+        const ctx = document.getElementById('chartDetailLama').getContext('2d');
+        if (chartDetailInstance) chartDetailInstance.destroy();
+        chartDetailInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ["K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8", "K9", "K10"],
+                datasets: [
+                    { label: 'Benar', data: data.pola_benar, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', fill: true, tension: 0.3 },
+                    { label: 'Salah', data: data.pola_salah, borderColor: '#f39c12', borderDash: [5, 5], fill: false, tension: 0.3 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } }
+        });
     };
 
     window.terapkanSimbolRiwayat = (index) => {
@@ -324,7 +384,7 @@
     window.jawab = (idx) => { if(!isPaused) { (idx === correctIdx) ? b++ : s++; makeQ(); } };
 
     function startT() {
-        let t = 1; document.getElementById('timer').innerText = t;
+        let t = 60; document.getElementById('timer').innerText = t;
         clearInterval(timerId);
         timerId = setInterval(() => {
             t--; document.getElementById('timer').innerText = t;
@@ -378,7 +438,7 @@
             pola_benar: bList, pola_salah: sList,
             kecepatan: panker.toFixed(1), ketelitian: tianker.toFixed(1),
             kestabilan: Math.max(0,janker).toFixed(1), ketahanan: Math.min(hanker,100).toFixed(1),
-            kunci_kolom: allKeys // Menyimpan kunci simbol ke database untuk fitur Load nanti
+            kunci_kolom: allKeys
         }).then(() => {
             loadUserHistory(); 
         });
