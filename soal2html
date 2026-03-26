@@ -124,7 +124,6 @@
 
     let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
 
-    // SINGLE SESSION SECURITY
     function initSecurity(user) {
         const sid = Date.now().toString();
         const sRef = ref(db, `user_sessions/${user.uid}`);
@@ -137,39 +136,38 @@
         });
     }
 
-    // LEADERBOARD FUNCTION
     function loadLeaderboard() {
-        // Ambil 20 data terakhir agar pencarian skor tertinggi lebih akurat
         const lbQuery = query(ref(db, 'rekap_skor'), orderByChild('skor'), limitToLast(20));
-        
         onValue(lbQuery, (snap) => {
             let list = [];
             snap.forEach(child => { 
                 let data = child.val();
-                // PAKSA skor jadi angka agar bisa dihitung & ditampilkan
                 let skorAngka = parseFloat(data.skor) || 0;
-                list.push({
-                    nama: data.nama || "Anonim",
-                    skor: skorAngka
-                });
+                list.push({ nama: data.nama || "Anonim", skor: skorAngka });
             });
-
-            // Urutkan dari skor tertinggi ke terendah
             list.sort((x, y) => y.skor - x.skor);
-
             let html = "";
-            // Ambil 5 teratas
             list.slice(0, 5).forEach((item, index) => {
                 let namaUser = item.nama.split('@')[0].toUpperCase();
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td style="text-align:left; padding-left:15px;">${namaUser}</td>
-                        <td style="font-weight:bold; color:var(--success);">${item.skor.toFixed(1)}</td>
-                    </tr>`;
+                html += `<tr><td>${index + 1}</td><td style="text-align:left; padding-left:15px;">${namaUser}</td><td style="font-weight:bold; color:var(--success);">${item.skor.toFixed(1)}</td></tr>`;
             });
-            
             document.getElementById('leaderboard-body').innerHTML = html || "<tr><td colspan='3'>Belum ada data.</td></tr>";
+        });
+    }
+
+    // FUNGSI RIWAYAT KHUSUS USER
+    function loadUserHistory() {
+        const historyBody = document.getElementById('history-body');
+        if (!auth.currentUser) return;
+        const userEmail = auth.currentUser.email;
+        const q = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(userEmail));
+        
+        onValue(q, (snap) => {
+            let results = [];
+            snap.forEach(child => { results.push(child.val()); });
+            results.reverse(); 
+            let html = results.map(item => `<tr><td>${item.waktu}</td><td style="font-weight:bold; color:var(--primary);">${item.skor}</td></tr>`).join('');
+            historyBody.innerHTML = html || "<tr><td colspan='2'>Belum ada riwayat.</td></tr>";
         });
     }
 
@@ -178,10 +176,10 @@
         initSecurity(user);
         document.getElementById('user-display').innerText = "PESERTA: " + user.email.split('@')[0].toUpperCase();
         loadLeaderboard();
+        loadUserHistory(); // BARIS PENTING: Memuat riwayat segera saat login
         checkProgress();
     });
 
-    // VALIDASI INPUT
     function validate(input, group) {
         const val = input.value.toUpperCase();
         const isDuplicate = new Set(val).size !== val.length;
@@ -189,7 +187,6 @@
         group.classList.remove('error'); return true;
     }
 
-    // BUILD INPUTS
     const inputArea = document.getElementById('input-fields');
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
@@ -312,18 +309,18 @@
             options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
         });
 
-        push(ref(db, 'rekap_skor'), { nama: auth.currentUser.email, skor: parseFloat(final.toFixed(1)), waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID') });
-        loadMyHistory();
-    }
-
-    function loadMyHistory() {
-        const hQuery = query(ref(db, 'rekap_skor'), orderByChild('nama'), equalTo(auth.currentUser.email));
-        onValue(hQuery, (snap) => {
-            let html = ""; const data = snap.val();
-            if(data) {
-                Object.values(data).reverse().slice(0, 5).forEach(item => { html += `<tr><td>${item.waktu}</td><td><span style="color:var(--success)">${item.skor}</span></td></tr>`; });
-            } else { html = "<tr><td colspan='2'>Belum ada riwayat.</td></tr>"; }
-            document.getElementById('history-body').innerHTML = html;
+        push(ref(db, 'rekap_skor'), { 
+            nama: auth.currentUser.email, 
+            skor: parseFloat(final.toFixed(1)), 
+            waktu: new Date().toLocaleTimeString('id-ID') + " " + new Date().toLocaleDateString('id-ID'),
+            pola_benar: bList,
+            pola_salah: sList,
+            kecepatan: panker.toFixed(1),
+            ketelitian: tianker.toFixed(1),
+            kestabilan: Math.max(0,janker).toFixed(1),
+            ketahanan: Math.min(hanker,100).toFixed(1)
+        }).then(() => {
+            loadUserHistory(); 
         });
     }
 
