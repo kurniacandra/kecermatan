@@ -313,7 +313,8 @@
     for(let i=0; i<10; i++) {
         const div = document.createElement('div');
         div.className = 'input-group'; div.id = `g-${i}`;
-        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ABCDE" value="ABCDE"> <div class="error-msg">5 Karakter Unik!</div>`;
+        // placeholder="ISI KOLOM" adalah teks transparan, value="" dikosongkan agar terlihat
+        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ISI KOLOM" value=""> <div class="error-msg">5 Karakter Unik!</div>`;
         inputArea.appendChild(div);
         const inp = div.querySelector('input');
         inp.addEventListener('input', () => validate(inp, div));
