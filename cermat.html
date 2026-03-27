@@ -3,87 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN - SIMULASI</title>
+    <title>CAT KECERMATAN - GAMBAR ASLI</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; user-select: none; }
-        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; position: relative; }
+        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
-        
         .screen { display: none; padding: 20px; text-align: center; }
         .active { display: block; }
         
-        /* SETUP INPUT */
-        .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
-        .input-group { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; position: relative; }
-        .input-group.error { border: 2px solid var(--danger); background: #fff0f0; }
-        input[type="text"] { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 1.1rem; outline: none; background: transparent; text-transform: uppercase; letter-spacing: 2px; }
-        .error-msg { color: var(--danger); font-size: 0.6rem; display: none; font-weight: bold; margin-top: 5px; }
-        .input-group.error .error-msg { display: block; }
+        /* PREVIEW GRID */
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .preview-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 10px; }
+        .img-bundle { display: flex; justify-content: center; gap: 2px; margin-top: 5px; background: #eee; padding: 5px; border-radius: 5px; }
+        .img-bundle img { width: 25px; height: 25px; object-fit: contain; }
 
         /* GAMEPLAY */
-        .stats-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
-        .timer { font-size: 3rem; font-weight: 800; color: var(--danger); grid-column: 2; }
-        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
-        .key-box { border: 2px solid #2c3e50; border-radius: 8px; background: #fff; overflow: hidden; }
-        .key-h { background: #2c3e50; color: white; padding: 3px; font-size: 0.8rem; }
-        .key-v { font-size: 2.2rem; padding: 5px; font-weight: 900; }
-        #question { font-size: 5rem; font-weight: 900; letter-spacing: 15px; margin: 25px 0; color: #1a252f; min-height: 120px; }
-        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .btn-ans { padding: 20px 0; font-size: 1.8rem; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .timer { font-size: 3.5rem; font-weight: 800; color: var(--danger); margin: 10px 0; }
+        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .key-box { border: 2px solid #2c3e50; border-radius: 10px; background: #fff; overflow: hidden; }
+        .key-h { background: #2c3e50; color: white; padding: 5px; font-weight: bold; }
+        .key-v { padding: 10px; height: 70px; display: flex; justify-content: center; align-items: center; }
+        .key-v img { width: 60px; height: 60px; }
         
-        /* RESULTS */
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        .final-score-box { background: var(--primary); color: var(--accent); padding: 20px; border-radius: 15px; }
-        
-        .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .jeda-box { background: white; padding: 40px; border-radius: 20px; text-align: center; min-width: 300px; }
+        #question { display: flex; justify-content: center; gap: 10px; margin: 30px 0; min-height: 100px; }
+        #question img { width: 80px; height: 80px; }
 
-        .modal-riwayat { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-        .row-simbol { border-bottom: 1px solid #eee; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
+        .btn-ans { padding: 25px 0; font-size: 2rem; border: none; background: var(--primary); color: white; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .btn-ans:active { background: var(--accent); }
+
+        .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
 <div class="container">
-    <div class="header">
-        <h3 style="margin:0">CAT KECERMATAN (OFFLINE MODE)</h3>
-    </div>
+    <div class="header"><h3>SIMULASI KECERMATAN - MATERI 11</h3></div>
 
     <div id="screen-setup" class="screen active">
-        <h3 style="margin:0; color:var(--primary);">PENGATURAN KOLOM</h3>
-        <p style="font-size: 0.8rem; color: #666;">Silakan isi simbol atau gunakan riwayat untuk memulai pengerjaan.</p>
+        <h2 style="color:var(--primary)">PILIH MATERI</h2>
+        <p>Gambar otomatis dimuat dari server PintarPsi.</p>
         
-        <div class="setup-grid" id="input-fields"></div>
-        
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; gap:10px;">
-                <button onclick="autoFill()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; background:#eee; border:1px solid #ccc;">ACAK SIMBOL</button>
-                <button onclick="window.bukaModalRiwayat()" style="flex:1; padding:12px; cursor:pointer; font-weight:bold; border-radius:8px; background:#ebf5ff; color:#3498db; border:1px solid #3498db;">RIWAYAT SIMBOL</button>
+        <div class="preview-grid" id="preview-area">
             </div>
-            <button onclick="window.mulai()" style="width:100%; padding:15px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1.1rem;">MULAI UJIAN</button>
-        </div>
 
-        <div style="margin-top:25px; background:#fff; border:1px solid #ddd; border-radius:10px; padding:10px;">
-            <h4 style="margin:0 0 10px 0;">TOP 5 SKOR</h4>
-            <table>
-                <thead><tr style="background:#eee;"><th>Rank</th><th>User</th><th>Skor</th></tr></thead>
-                <tbody id="leaderboard-body"><tr><td colspan="3">Memuat peringkat...</td></tr></tbody>
-            </table>
-        </div>
+        <button onclick="window.mulaiUjian()" style="width:100%; padding:20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.5rem;">MULAI SEKARANG</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <div class="stats-bar">
-            <div id="col-title" style="font-weight: 900;">KOLOM 1</div>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <b id="col-label" style="font-size: 1.5rem;">KOLOM 1</b>
             <div class="timer" id="timer">60</div>
-            <div id="counter-info" style="font-size:0.8rem">B: 0 | S: 0</div>
+            <b id="score-live">B: 0</b>
         </div>
-        <div class="key-row" id="key-container"></div>
-        <div id="question">----</div>
+        
+        <div class="key-row" id="key-display"></div>
+        <div id="question"></div>
+        
         <div class="ans-grid">
             <button class="btn-ans" onclick="window.jawab(0)">A</button>
             <button class="btn-ans" onclick="window.jawab(1)">B</button>
@@ -94,203 +72,153 @@
     </div>
 
     <div id="screen-result" class="screen">
-        <h3>HASIL PENILAIAN</h3>
-        <div class="final-score-box">
-            <h1 style="font-size: 4rem; margin:0;" id="res-total">0</h1>
-            <div id="aspek-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;"></div>
-        </div>
-        <div style="height: 250px; margin: 20px 0;"><canvas id="taliChart"></canvas></div>
-        <button class="btn-ans" style="background:var(--success); font-size:1rem; width:200px;" onclick="window.resetUjian()">UJIAN BARU</button>
+        <h1>SKOR AKHIR: <span id="final-total">0</span></h1>
+        <canvas id="resultChart" style="max-height: 300px;"></canvas>
+        <button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; background:var(--primary); color:white; border-radius:10px; cursor:pointer;">ULANGI UJIAN</button>
     </div>
 </div>
 
-<div id="popup-jeda" class="overlay-jeda">
-    <div class="jeda-box">
-        <h2 style="margin:0;">KOLOM SELESAI</h2>
-        <div id="jeda-countdown" style="font-size: 6rem; font-weight: 900; color: var(--danger);">3</div>
-    </div>
-</div>
-
-<div id="modal-riwayat" class="modal-riwayat">
-    <div class="modal-content">
-        <h3>RIWAYAT TERAKHIR</h3>
-        <div id="list-riwayat-simbol">Memuat data...</div>
-        <button onclick="document.getElementById('modal-riwayat').style.display='none'" style="width:100%; margin-top:15px; padding:10px; cursor:pointer;">TUTUP</button>
-    </div>
+<div id="jeda-layer" class="overlay-jeda">
+    <h1>KOLOM SELESAI</h1>
+    <div id="jeda-timer" style="font-size: 5rem; font-weight: 900; color:var(--accent)">3</div>
+    <p>Siapkan mata untuk kolom berikutnya!</p>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyCT6bL4sZxLEFr_wyxAW7VPRxLukNQ02mw", 
-        authDomain: "simulasi-2b93b.firebaseapp.com", 
-        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com", 
-        projectId: "simulasi-2b93b", 
-        storageBucket: "simulasi-2b93b.firebasestorage.app", 
-        appId: "1:562508858666:web:fa63f71ec175c675e64a53" 
+        databaseURL: "https://simulasi-2b93b-default-rtdb.firebaseio.com",
+        projectId: "simulasi-2b93b", appId: "1:562508858666:web:fa63f71ec175c675e64a53" 
     };
+    const db = getDatabase(initializeApp(firebaseConfig));
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let allKeys = [], currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1, isPaused = false;
-    let dataSimbolRiwayat = [];
-
-    // Init Inputs
-    const inputArea = document.getElementById('input-fields');
-    for(let i=0; i<10; i++) {
-        const div = document.createElement('div');
-        div.className = 'input-group'; div.id = `g-${i}`;
-        div.innerHTML = `<b>K${i+1}</b> <input type="text" id="in-${i}" maxlength="5" placeholder="ISI 5 HURUF"> <div class="error-msg">5 Huruf Unik!</div>`;
-        inputArea.appendChild(div);
-        const inp = div.querySelector('input');
-        inp.addEventListener('input', () => validate(inp, div));
-    }
-
-    function validate(input, group) {
-        const val = input.value.toUpperCase();
-        const isDuplicate = new Set(val).size !== val.length;
-        if (isDuplicate || val.length < 5) { group.classList.add('error'); return false; }
-        group.classList.remove('error'); return true;
-    }
-
-    window.autoFill = () => {
-        const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        for(let i=0; i<10; i++) {
-            let chunk = pool.split("").sort(() => Math.random() - 0.5).slice(0, 5).join("");
-            document.getElementById(`in-${i}`).value = chunk;
-            validate(document.getElementById(`in-${i}`), document.getElementById(`g-${i}`));
-        }
-    };
-
-    window.bukaModalRiwayat = () => {
-        document.getElementById('modal-riwayat').style.display = 'flex';
-        const q = query(ref(db, 'rekap_skor'), limitToLast(10));
-        onValue(q, (snap) => {
-            let html = ""; dataSimbolRiwayat = [];
-            snap.forEach(child => {
-                const val = child.val();
-                if(val.kunci_kolom) {
-                    dataSimbolRiwayat.push(val.kunci_kolom);
-                    html = `<div class="row-simbol">
-                        <div><b>${val.waktu}</b><br><small>Skor: ${val.skor}</small></div>
-                        <button onclick="window.pilihSimbol(${dataSimbolRiwayat.length-1})" style="padding:5px 10px; cursor:pointer;">Pilih</button>
-                    </div>` + html;
-                }
-            });
-            document.getElementById('list-riwayat-simbol').innerHTML = html || "Tidak ada riwayat.";
-        }, {onlyOnce: true});
-    };
-
-    window.pilihSimbol = (idx) => {
-        const keys = dataSimbolRiwayat[idx];
-        keys.forEach((k, i) => { if(i < 10) document.getElementById(`in-${i}`).value = k.join(''); });
-        document.getElementById('modal-riwayat').style.display = 'none';
-    };
-
-    window.mulai = () => {
-        allKeys = []; let valid = true;
-        for(let i=0; i<10; i++){
-            const el = document.getElementById(`in-${i}`);
-            if(!validate(el, document.getElementById(`g-${i}`))) valid = false;
-            allKeys.push(el.value.toUpperCase().split(''));
-        }
-        if(!valid) return alert("Cek kembali kolom yang merah!");
-        currentCol = 0; stats = [];
-        showS('screen-game'); run();
-    };
-
-    function run() {
-        b = 0; s = 0; isPaused = false;
-        document.getElementById('col-title').innerText = `KOLOM ${currentCol + 1}`;
-        let h = ""; allKeys[currentCol].forEach((k, i) => {
-            h += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v">${k}</div></div>`;
+    // DATA LINK GAMBAR (10 KOLOM)
+    const materiData = [];
+    for(let k=1; k<=10; k++) {
+        let kolom = [];
+        ['a','b','c','d','e'].forEach(char => {
+            kolom.push(`https://admin.pintarpsi.com/storage/materisebelas.1.kolom${k}.${char}.png`);
         });
-        document.getElementById('key-container').innerHTML = h;
-        makeQ(); startT();
+        materiData.push(kolom);
     }
 
-    function makeQ() {
-        correctIdx = Math.floor(Math.random() * 5);
-        let qArray = allKeys[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
-        document.getElementById('question').innerText = qArray.join('');
-    }
+    let currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    window.jawab = (idx) => { 
-        if(!isPaused) { 
-            (idx === correctIdx) ? b++ : s++; 
-            document.getElementById('counter-info').innerText = `B: ${b} | S: ${s}`;
-            makeQ(); 
-        } 
+    // Tampilkan Preview di Awal
+    const previewArea = document.getElementById('preview-area');
+    materiData.forEach((kolom, i) => {
+        let imgs = kolom.map(link => `<img src="${link}">`).join('');
+        previewArea.innerHTML += `
+            <div class="preview-card">
+                <b>Kolom ${i+1}</b>
+                <div class="img-bundle">${imgs}</div>
+            </div>`;
+    });
+
+    window.mulaiUjian = () => {
+        currentCol = 0; stats = [];
+        document.getElementById('screen-setup').style.display = 'none';
+        document.getElementById('screen-game').style.display = 'block';
+        startStep();
     };
 
-    function startT() {
-        let t = 60; document.getElementById('timer').innerText = t;
-        clearInterval(timerId);
+    function startStep() {
+        b = 0; s = 0;
+        document.getElementById('col-label').innerText = `KOLOM ${currentCol + 1}`;
+        document.getElementById('score-live').innerText = `B: 0`;
+        
+        // Tampilkan Key (A-E)
+        let keyHtml = "";
+        materiData[currentCol].forEach((link, i) => {
+            keyHtml += `
+                <div class="key-box">
+                    <div class="key-h">${['A','B','C','D','E'][i]}</div>
+                    <div class="key-v"><img src="${link}"></div>
+                </div>`;
+        });
+        document.getElementById('key-display').innerHTML = keyHtml;
+        
+        newQuest();
+        startTimer();
+    }
+
+    function newQuest() {
+        correctIdx = Math.floor(Math.random() * 5);
+        // Ambil 4 gambar yang SALAH (acak)
+        let questImgs = materiData[currentCol]
+            .filter((_, i) => i !== correctIdx)
+            .sort(() => Math.random() - 0.5);
+            
+        document.getElementById('question').innerHTML = questImgs.map(link => `<img src="${link}">`).join('');
+    }
+
+    window.jawab = (idx) => {
+        if(idx === correctIdx) b++; else s++;
+        document.getElementById('score-live').innerText = `B: ${b}`;
+        newQuest();
+    };
+
+    function startTimer() {
+        let t = 60;
+        document.getElementById('timer').innerText = t;
         timerId = setInterval(() => {
-            t--; document.getElementById('timer').innerText = t;
+            t--;
+            document.getElementById('timer').innerText = t;
             if(t <= 0) {
-                clearInterval(timerId); isPaused = true;
-                stats.push({ col: currentCol + 1, b: b, s: s });
+                clearInterval(timerId);
+                stats.push({b, s});
                 currentCol++;
-                if(currentCol < 10) tampilkanJeda(); else finish();
+                if(currentCol < 10) showJeda(); else finish();
             }
         }, 1000);
     }
 
-    function tampilkanJeda() {
-        const p = document.getElementById('popup-jeda'); let sisa = 3;
-        p.style.display = 'flex';
-        const intJ = setInterval(() => {
-            sisa--; document.getElementById('jeda-countdown').innerText = sisa;
-            if(sisa <= 0) { clearInterval(intJ); p.style.display = 'none'; run(); }
+    function showJeda() {
+        const layer = document.getElementById('jeda-layer');
+        let sisa = 3;
+        layer.style.display = 'flex';
+        const jInt = setInterval(() => {
+            sisa--;
+            document.getElementById('jeda-timer').innerText = sisa;
+            if(sisa <= 0) {
+                clearInterval(jInt);
+                layer.style.display = 'none';
+                startStep();
+            }
         }, 1000);
     }
 
     function finish() {
-        showS('screen-result');
-        const bList = stats.map(d => d.b), sList = stats.map(d => d.s);
-        const totB = bList.reduce((a,x) => a+x, 0);
-        const final = (totB / 10) * 2; // Contoh hitung simpel
-
-        document.getElementById('res-total').innerText = final.toFixed(1);
+        document.getElementById('screen-game').style.display = 'none';
+        document.getElementById('screen-result').style.display = 'block';
         
+        let totalB = stats.reduce((acc, curr) => acc + curr.b, 0);
+        document.getElementById('final-total').innerText = (totalB / 10).toFixed(1);
+
         // Simpan ke Firebase
         push(ref(db, 'rekap_skor'), {
-            nama: "GUEST_USER",
-            skor: parseFloat(final.toFixed(1)),
-            waktu: new Date().toLocaleString('id-ID'),
-            kunci_kolom: allKeys,
-            pola_benar: bList
+            nama: "GUEST_GAMBAR",
+            skor: totalB / 10,
+            waktu: new Date().toLocaleString(),
+            pola_benar: stats.map(d => d.b)
         });
 
-        // Chart
-        new Chart(document.getElementById('taliChart'), {
+        new Chart(document.getElementById('resultChart'), {
             type: 'line',
             data: {
-                labels: stats.map(d => "K"+d.col),
-                datasets: [{ label: 'Benar', data: bList, borderColor: '#27ae60', fill: true }]
+                labels: stats.map((_, i) => "K"+(i+1)),
+                datasets: [{ label: 'Benar', data: stats.map(d => d.b), borderColor: '#27ae60', tension: 0.3, fill:true }]
             }
         });
     }
 
-    // Leaderboard Load
-    onValue(query(ref(db, 'rekap_skor'), orderByChild('skor'), limitToLast(5)), (snap) => {
-        let h = ""; 
-        let list = []; snap.forEach(c => list.push(c.val()));
-        list.reverse().forEach((it, i) => {
-            h += `<tr><td>${i+1}</td><td>${it.nama}</td><td>${it.skor}</td></tr>`;
-        });
-        document.getElementById('leaderboard-body').innerHTML = h || "<tr><td colspan='3'>Belum ada data</td></tr>";
-    });
-
-    window.resetUjian = () => location.reload();
-    function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-    window.addEventListener('keydown', (e) => { 
-        const m = {'a':0,'b':1,'c':2,'d':3,'e':4}; 
-        if(m[e.key.toLowerCase()] !== undefined) window.jawab(m[e.key.toLowerCase()]); 
+    // Keyboard Support
+    window.addEventListener('keydown', (e) => {
+        const map = {'a':0,'b':1,'c':2,'d':3,'e':4};
+        if(map[e.key.toLowerCase()] !== undefined) window.jawab(map[e.key.toLowerCase()]);
     });
 </script>
 </body>
