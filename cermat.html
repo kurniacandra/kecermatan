@@ -1,84 +1,131 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN - FULL FOCUS</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Simulasi Kecermatan - Pintar Style</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="https://pintarpsi.com/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="https://pintarpsi.com/dist/css/adminlte.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; user-select: none; }
-        .container { background: white; width: 100%; max-width: 900px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
-        .screen { display: none; padding: 20px; text-align: center; }
+        body { background-color: #f4f6f9; user-select: none; }
+        .text-blue { color: #007bff; }
+        .card-title-custom { font-weight: bold; font-size: 1.2rem; }
+        .img-soal { width: 80px; height: 80px; object-fit: contain; }
+        .img-persoalan { width: 50px; height: 50px; object-fit: contain; }
+        .btn-success-custom { background-color: #28a745; border-color: #28a745; color: white; width: 100%; font-weight: bold; }
+        .screen { display: none; }
         .active { display: block; }
-        
-        /* PREVIEW GRID */
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .preview-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 10px; }
-        .img-bundle { display: flex; justify-content: center; gap: 2px; margin-top: 5px; background: #eee; padding: 5px; border-radius: 5px; }
-        .img-bundle img { width: 25px; height: 25px; object-fit: contain; }
-
-        /* GAMEPLAY */
-        .timer { font-size: 3.5rem; font-weight: 800; color: var(--danger); margin: 10px 0; }
-        .key-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
-        .key-box { border: 2px solid #2c3e50; border-radius: 10px; background: #fff; overflow: hidden; }
-        .key-h { background: #2c3e50; color: white; padding: 5px; font-weight: bold; }
-        .key-v { padding: 10px; height: 70px; display: flex; justify-content: center; align-items: center; }
-        .key-v img { width: 60px; height: 60px; }
-        
-        #question { display: flex; justify-content: center; gap: 10px; margin: 30px 0; min-height: 100px; }
-        #question img { width: 80px; height: 80px; }
-
-        .ans-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
-        .btn-ans { padding: 25px 0; font-size: 2rem; border: none; background: var(--primary); color: white; border-radius: 12px; cursor: pointer; font-weight: bold; }
-        .btn-ans:active { background: var(--accent); }
-
-        .overlay-jeda { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
+        .overlay-jeda { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999; color: white; 
+        }
     </style>
 </head>
-<body>
-
-<div class="container">
-    <div class="header"><h3>SIMULASI KECERMATAN - MATERI 11</h3></div>
-
-    <div id="screen-setup" class="screen active">
-        <h2 style="color:var(--primary)">PILIH MATERI</h2>
-        <p>Gambar otomatis dimuat dari server PintarPsi.</p>
-        
-        <div class="preview-grid" id="preview-area"></div>
-
-        <button onclick="window.mulaiUjian()" style="width:100%; padding:20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.5rem;">MULAI SEKARANG</button>
-    </div>
-
-    <div id="screen-game" class="screen">
-        <div style="display:flex; justify-content: center; align-items: center; position: relative;">
-            <b id="col-label" style="position: absolute; left: 0; font-size: 1.5rem;">KOLOM 1</b>
-            <div class="timer" id="timer">60</div>
+<body class="hold-transition layout-top-nav">
+<div class="wrapper">
+    <nav class="main-header navbar navbar-expand-md navbar-light navbar-white">
+        <div class="container">
+            <a href="#" class="navbar-brand">
+                <span class="brand-text font-weight-light h4"><strong>pintar</strong>psi.com</span>
+            </a>
         </div>
-        
-        <div class="key-row" id="key-display"></div>
-        <div id="question"></div>
-        
-        <div class="ans-grid">
-            <button class="btn-ans" onclick="window.jawab(0)">A</button>
-            <button class="btn-ans" onclick="window.jawab(1)">B</button>
-            <button class="btn-ans" onclick="window.jawab(2)">C</button>
-            <button class="btn-ans" onclick="window.jawab(3)">D</button>
-            <button class="btn-ans" onclick="window.jawab(4)">E</button>
-        </div>
-    </div>
+    </nav>
 
-    <div id="screen-result" class="screen">
-        <h1>SKOR AKHIR: <span id="final-total">0</span></h1>
-        <canvas id="resultChart" style="max-height: 350px; margin-top: 20px;"></canvas>
-        <button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; background:var(--primary); color:white; border-radius:10px; cursor:pointer;">ULANGI UJIAN</button>
+    <div class="content-wrapper">
+        <div class="content">
+            <br>
+            <div class="container">
+                
+                <div id="screen-setup" class="screen active">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3>Persiapan Materi Sebelas</h3>
+                            <p>Klik tombol di bawah untuk memulai 10 kolom otomatis.</p>
+                            <button onclick="window.mulaiUjian()" class="btn btn-primary btn-lg">MULAI SEKARANG</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="screen-game" class="screen">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title-custom">Materi Sebelas</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <small>Sisa Waktu</small>
+                                <h1><label id="countdown" class="text-blue">00:00:00</label></h1>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body table-responsive">
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <strong>Petunjuk</strong>
+                                            <table class="table table-bordered">
+                                                <tr>
+                                                    <td colspan="5" class="text-center pt-0 pb-0"><strong id="col-label">KOLOM 1</strong></td>
+                                                </tr>
+                                                <tr id="key-display-row">
+                                                    </tr>
+                                                <tr class="text-center">
+                                                    <td>a</td><td>b</td><td>c</td><td>d</td><td>e</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-3"></div>
+
+                                        <div class="col-md-4 mt-3">
+                                            <table class="table table-bordered">
+                                                <tr><td colspan="4" class="pt-0 pb-0"><strong>Persoalan:</strong></td></tr>
+                                                <tr id="question-row">
+                                                    </tr>
+                                            </table>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td><button class="btn btn-success-custom" onclick="window.jawab(0)">a</button></td>
+                                                    <td><button class="btn btn-success-custom" onclick="window.jawab(1)">b</button></td>
+                                                    <td><button class="btn btn-success-custom" onclick="window.jawab(2)">c</button></td>
+                                                    <td><button class="btn btn-success-custom" onclick="window.jawab(3)">d</button></td>
+                                                    <td><button class="btn btn-success-custom" onclick="window.jawab(4)">e</button></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="screen-result" class="screen">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h1>HASIL SIMULASI</h1>
+                            <h3>Skor Rata-rata: <span id="final-total" class="text-blue">0</span></h3>
+                            <canvas id="resultChart" style="max-height: 350px;"></canvas>
+                            <button onclick="location.reload()" class="btn btn-primary mt-3">ULANGI UJIAN</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 
 <div id="jeda-layer" class="overlay-jeda">
     <h1>KOLOM SELESAI</h1>
-    <div id="jeda-timer" style="font-size: 5rem; font-weight: 900; color:var(--accent)">3</div>
+    <div id="jeda-timer" style="font-size: 5rem; font-weight: 900; color: #f39c12">3</div>
     <p>Siapkan mata untuk kolom berikutnya!</p>
 </div>
 
@@ -104,27 +151,24 @@
 
     let currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    const previewArea = document.getElementById('preview-area');
-    materiData.forEach((kolom, i) => {
-        let imgs = kolom.map(link => `<img src="${link}">`).join('');
-        previewArea.innerHTML += `<div class="preview-card"><b>Kolom ${i+1}</b><div class="img-bundle">${imgs}</div></div>`;
-    });
-
     window.mulaiUjian = () => {
         currentCol = 0; stats = [];
-        document.getElementById('screen-setup').style.display = 'none';
-        document.getElementById('screen-game').style.display = 'block';
+        document.getElementById('screen-setup').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
         startStep();
     };
 
     function startStep() {
         b = 0; s = 0;
         document.getElementById('col-label').innerText = `KOLOM ${currentCol + 1}`;
+        
+        // Render Kunci
         let keyHtml = "";
-        materiData[currentCol].forEach((link, i) => {
-            keyHtml += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v"><img src="${link}"></div></div>`;
+        materiData[currentCol].forEach(link => {
+            keyHtml += `<td class="text-center"><img src="${link}" class="img-soal"></td>`;
         });
-        document.getElementById('key-display').innerHTML = keyHtml;
+        document.getElementById('key-display-row').innerHTML = keyHtml;
+        
         newQuest();
         startTimer();
     }
@@ -132,7 +176,12 @@
     function newQuest() {
         correctIdx = Math.floor(Math.random() * 5);
         let questImgs = materiData[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
-        document.getElementById('question').innerHTML = questImgs.map(link => `<img src="${link}">`).join('');
+        
+        let questHtml = "";
+        questImgs.forEach(link => {
+            questHtml += `<td class="text-center"><img src="${link}" class="img-persoalan"></td>`;
+        });
+        document.getElementById('question-row').innerHTML = questHtml;
     }
 
     window.jawab = (idx) => {
@@ -142,10 +191,10 @@
 
     function startTimer() {
         let t = 60;
-        document.getElementById('timer').innerText = t;
+        updateTimerDisplay(t);
         timerId = setInterval(() => {
             t--;
-            document.getElementById('timer').innerText = t;
+            updateTimerDisplay(t);
             if(t <= 0) {
                 clearInterval(timerId);
                 stats.push({b, s});
@@ -153,6 +202,12 @@
                 if(currentCol < 10) showJeda(); else finish();
             }
         }, 1000);
+    }
+
+    function updateTimerDisplay(sec) {
+        let m = Math.floor(sec / 60);
+        let s = sec % 60;
+        document.getElementById('countdown').innerHTML = `00:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
     }
 
     function showJeda() {
@@ -171,13 +226,13 @@
     }
 
     function finish() {
-        document.getElementById('screen-game').style.display = 'none';
-        document.getElementById('screen-result').style.display = 'block';
+        document.getElementById('screen-game').classList.remove('active');
+        document.getElementById('screen-result').classList.add('active');
         let totalB = stats.reduce((acc, curr) => acc + curr.b, 0);
         document.getElementById('final-total').innerText = (totalB / 10).toFixed(1);
 
         push(ref(db, 'rekap_skor'), {
-            nama: "GUEST_GAMBAR",
+            nama: "GUEST_PINTAR_STYLE",
             skor: totalB / 10,
             waktu: new Date().toLocaleString(),
             detail_benar: stats.map(d => d.b),
@@ -187,30 +242,11 @@
         new Chart(document.getElementById('resultChart'), {
             type: 'line',
             data: {
-                labels: stats.map((_, i) => "Kolom "+(i+1)),
+                labels: stats.map((_, i) => "K"+(i+1)),
                 datasets: [
-                    { 
-                        label: 'Benar', 
-                        data: stats.map(d => d.b), 
-                        borderColor: '#27ae60', 
-                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                        tension: 0.3, 
-                        fill: true 
-                    },
-                    { 
-                        label: 'Salah', 
-                        data: stats.map(d => d.s), 
-                        borderColor: '#e74c3c', 
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        tension: 0.3, 
-                        fill: true 
-                    }
+                    { label: 'Benar', data: stats.map(d => d.b), borderColor: '#28a745', tension: 0.3, fill: true, backgroundColor: 'rgba(40, 167, 69, 0.1)' },
+                    { label: 'Salah', data: stats.map(d => d.s), borderColor: '#dc3545', tension: 0.3, fill: true, backgroundColor: 'rgba(220, 53, 69, 0.1)' }
                 ]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'top' } },
-                scales: { y: { beginAtZero: true } }
             }
         });
     }
