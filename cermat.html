@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAT KECERMATAN - GAMBAR ASLI</title>
+    <title>CAT KECERMATAN - FULL FOCUS</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #1a252f; --accent: #f39c12; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
@@ -46,18 +46,16 @@
         <h2 style="color:var(--primary)">PILIH MATERI</h2>
         <p>Gambar otomatis dimuat dari server PintarPsi.</p>
         
-        <div class="preview-grid" id="preview-area">
-            </div>
+        <div class="preview-grid" id="preview-area"></div>
 
         <button onclick="window.mulaiUjian()" style="width:100%; padding:20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.5rem;">MULAI SEKARANG</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <b id="col-label" style="font-size: 1.5rem;">KOLOM 1</b>
+        <div style="display:flex; justify-content: center; align-items: center; position: relative;">
+            <b id="col-label" style="position: absolute; left: 0; font-size: 1.5rem;">KOLOM 1</b>
             <div class="timer" id="timer">60</div>
-            <b id="score-live">B: 0</b>
-        </div>
+            </div>
         
         <div class="key-row" id="key-display"></div>
         <div id="question"></div>
@@ -95,7 +93,6 @@
     };
     const db = getDatabase(initializeApp(firebaseConfig));
 
-    // DATA LINK GAMBAR (10 KOLOM)
     const materiData = [];
     for(let k=1; k<=10; k++) {
         let kolom = [];
@@ -107,15 +104,10 @@
 
     let currentCol = 0, b = 0, s = 0, stats = [], timerId, correctIdx = -1;
 
-    // Tampilkan Preview di Awal
     const previewArea = document.getElementById('preview-area');
     materiData.forEach((kolom, i) => {
         let imgs = kolom.map(link => `<img src="${link}">`).join('');
-        previewArea.innerHTML += `
-            <div class="preview-card">
-                <b>Kolom ${i+1}</b>
-                <div class="img-bundle">${imgs}</div>
-            </div>`;
+        previewArea.innerHTML += `<div class="preview-card"><b>Kolom ${i+1}</b><div class="img-bundle">${imgs}</div></div>`;
     });
 
     window.mulaiUjian = () => {
@@ -128,36 +120,23 @@
     function startStep() {
         b = 0; s = 0;
         document.getElementById('col-label').innerText = `KOLOM ${currentCol + 1}`;
-        document.getElementById('score-live').innerText = `B: 0`;
-        
-        // Tampilkan Key (A-E)
         let keyHtml = "";
         materiData[currentCol].forEach((link, i) => {
-            keyHtml += `
-                <div class="key-box">
-                    <div class="key-h">${['A','B','C','D','E'][i]}</div>
-                    <div class="key-v"><img src="${link}"></div>
-                </div>`;
+            keyHtml += `<div class="key-box"><div class="key-h">${['A','B','C','D','E'][i]}</div><div class="key-v"><img src="${link}"></div></div>`;
         });
         document.getElementById('key-display').innerHTML = keyHtml;
-        
         newQuest();
         startTimer();
     }
 
     function newQuest() {
         correctIdx = Math.floor(Math.random() * 5);
-        // Ambil 4 gambar yang SALAH (acak)
-        let questImgs = materiData[currentCol]
-            .filter((_, i) => i !== correctIdx)
-            .sort(() => Math.random() - 0.5);
-            
+        let questImgs = materiData[currentCol].filter((_, i) => i !== correctIdx).sort(() => Math.random() - 0.5);
         document.getElementById('question').innerHTML = questImgs.map(link => `<img src="${link}">`).join('');
     }
 
     window.jawab = (idx) => {
         if(idx === correctIdx) b++; else s++;
-        document.getElementById('score-live').innerText = `B: ${b}`;
         newQuest();
     };
 
@@ -194,11 +173,9 @@
     function finish() {
         document.getElementById('screen-game').style.display = 'none';
         document.getElementById('screen-result').style.display = 'block';
-        
         let totalB = stats.reduce((acc, curr) => acc + curr.b, 0);
         document.getElementById('final-total').innerText = (totalB / 10).toFixed(1);
 
-        // Simpan ke Firebase
         push(ref(db, 'rekap_skor'), {
             nama: "GUEST_GAMBAR",
             skor: totalB / 10,
@@ -215,7 +192,6 @@
         });
     }
 
-    // Keyboard Support
     window.addEventListener('keydown', (e) => {
         const map = {'a':0,'b':1,'c':2,'d':3,'e':4};
         if(map[e.key.toLowerCase()] !== undefined) window.jawab(map[e.key.toLowerCase()]);
